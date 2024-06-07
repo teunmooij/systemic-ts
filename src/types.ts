@@ -107,29 +107,28 @@ type InvalidDependencies<
   infer First extends DependsOnOption<TDependencies, TSystemic>,
   ...infer Rest extends DependsOnOption<TDependencies, TSystemic>[],
 ]
-  ? First extends SimpleDependsOnOption<TSystemic>
-    ? [...ValidateSimpleDependency<TSystemic, TDependencies, First>, ...InvalidDependencies<TSystemic, TDependencies, Rest>]
-    : First extends MappingDependsOnOption<keyof TDependencies, TSystemic>
-    ? [...ValidateMappingDependency<TSystemic, TDependencies, First>, ...InvalidDependencies<TSystemic, TDependencies, Rest>]
-    : [] // Impossible situation
+  ? [...ValidateDependency<TSystemic, TDependencies, First>, ...InvalidDependencies<TSystemic, TDependencies, Rest>]
   : [];
 
-// TODO: fix for scoped
-type ValidateSimpleDependency<
+type ValidateDependency<
   TSystemic extends Record<string, Registration<unknown, boolean>>,
   TDependencies extends Record<string, unknown>,
-  TName extends SimpleDependsOnOption<TSystemic>,
-> = TName extends keyof (TSystemic | TDependencies)
-  ? [TSystemic[TName]] extends [TDependencies[TName]]
-    ? [] // Correct dependency
-    : [DependencyValidationError<TName, TDependencies[TName], TSystemic[TName]>] // Wrong type
-  : []; // Unexpected dependency
+  TOption extends DependsOnOption<TDependencies, TSystemic>,
+> = TOption extends SimpleDependsOnOption<TSystemic>
+  ? ValidateMappingDependency<TSystemic, TDependencies, { component: TOption; destination: TOption }>
+  : TOption extends MappingDependsOnOption<keyof TDependencies, TSystemic>
+  ? ValidateMappingDependency<TSystemic, TDependencies, OptionWithDestination<TOption>>
+  : []; // Impossible situation
+
+type OptionWithDestination<TOption extends MappingDependsOnOption<any, any>> = Omit<TOption, 'destination'> & {
+  destination: DependencyDestinationOf<TOption>;
+};
 
 // TODO: fix for scoped
 type ValidateMappingDependency<
   TSystemic extends Record<string, Registration<unknown, boolean>>,
   TDependencies extends Record<string, unknown>,
-  TMapping extends MappingDependsOnOption<keyof TDependencies, TSystemic>,
+  TMapping extends { component: string; destination: string; source?: string },
 > = DependencyDestinationOf<TMapping> extends keyof TDependencies
   ? [TSystemic[TMapping['component']]] extends [
       DependencySourceOf<TDependencies[DependencyDestinationOf<TMapping>], TMapping['source']>,
@@ -148,7 +147,13 @@ type DependencyDestinationOf<TMapping extends MappingDependsOnOption<any, any>> 
   ? TMapping['destination']
   : TMapping['component'];
 
-type DependencySourceOf<T, S> = S extends string ? (S extends keyof T ? T[S] : never) : T;
+type DependencySourceOf<T, S> = S extends string
+  ? S extends keyof T
+    ? T[S]
+    : S extends `${infer Key extends keyof T & string}.${infer Subkey}`
+    ? DependencySourceOf<T[Key], Subkey>
+    : never
+  : T;
 
 type DependencyValidationError<TName extends string, TExpected, TActual> = [TName, TExpected, TActual];
 
