@@ -236,7 +236,7 @@ export interface Systemic<TSystem extends Record<string, Registration>> {
    * @param {Component} component the component to be added
    * @param options registration options
    */
-  set: <S extends keyof TSystem, TComponent, Scoped extends boolean = false>(
+  set: <S extends keyof TSystem & string, TComponent, Scoped extends boolean = false>(
     name: S,
     component: TComponent,
     options?: { scoped?: boolean },
