@@ -82,6 +82,7 @@ type DependsOnOption<TDependencies, TSystemic> =
 
 type DependsOn<
   TSystemic extends Record<string, Registration<unknown, boolean>>,
+  TCurrent extends keyof TSystemic & string,
   TDependencies extends Record<string, unknown>,
 > = {
   /**
@@ -91,53 +92,64 @@ type DependsOn<
    */
   dependsOn: <TNames extends DependsOnOption<TDependencies, TSystemic>[]>(
     ...names: TNames
-  ) => InvalidDependencies<TSystemic, TDependencies, TNames> extends [
+  ) => InvalidDependencies<TSystemic, TCurrent, TDependencies, TNames> extends [
     infer First extends DependencyValidationError<any, any, any>,
     ...any[],
   ]
     ? SystemicWithInvalidDependency<First>
-    : SystemicBuild<TSystemic, MissingDependencies<TDependencies, TNames>>;
+    : SystemicBuild<TSystemic, TCurrent, MissingDependencies<TDependencies, TNames>>;
 };
 
 type InvalidDependencies<
   TSystemic extends Record<string, Registration<unknown, boolean>>,
+  TCurrent extends keyof TSystemic & string,
   TDependencies extends Record<string, unknown>,
   TGiven extends DependsOnOption<TDependencies, TSystemic>[],
 > = TGiven extends [
   infer First extends DependsOnOption<TDependencies, TSystemic>,
   ...infer Rest extends DependsOnOption<TDependencies, TSystemic>[],
 ]
-  ? [...ValidateDependency<TSystemic, TDependencies, First>, ...InvalidDependencies<TSystemic, TDependencies, Rest>]
+  ? [
+      ...ValidateDependency<TSystemic, TCurrent, TDependencies, First>,
+      ...InvalidDependencies<TSystemic, TCurrent, TDependencies, Rest>,
+    ]
   : [];
 
 type ValidateDependency<
   TSystemic extends Record<string, Registration<unknown, boolean>>,
+  TCurrent extends keyof TSystemic & string,
   TDependencies extends Record<string, unknown>,
   TOption extends DependsOnOption<TDependencies, TSystemic>,
 > = TOption extends SimpleDependsOnOption<TSystemic>
-  ? ValidateMappingDependency<TSystemic, TDependencies, { component: TOption; destination: TOption }>
+  ? ValidateMappingDependency<TSystemic, TCurrent, TDependencies, { component: TOption; destination: TOption }>
   : TOption extends MappingDependsOnOption<keyof TDependencies, TSystemic>
-  ? ValidateMappingDependency<TSystemic, TDependencies, OptionWithDestination<TOption>>
+  ? ValidateMappingDependency<TSystemic, TCurrent, TDependencies, OptionWithDestination<TOption>>
   : []; // Impossible situation
 
 type OptionWithDestination<TOption extends MappingDependsOnOption<any, any>> = Omit<TOption, 'destination'> & {
   destination: DependencyDestinationOf<TOption>;
 };
 
-// TODO: fix for scoped
 type ValidateMappingDependency<
   TSystemic extends Record<string, Registration<unknown, boolean>>,
+  TCurrent extends keyof TSystemic & string,
   TDependencies extends Record<string, unknown>,
   TMapping extends { component: string; destination: string; source?: string },
 > = DependencyDestinationOf<TMapping> extends keyof TDependencies
-  ? [TSystemic[TMapping['component']]] extends [
-      DependencySourceOf<TDependencies[DependencyDestinationOf<TMapping>], TMapping['source']>,
+  ? [TSystemic[TMapping['component']]['component']] extends [
+      DependencySourceOf<
+        TDependencies[DependencyDestinationOf<TMapping>],
+        OptionSource<TSystemic[TMapping['component']], TCurrent, TMapping['source']>
+      >,
     ]
     ? [] // Correct dependency
     : [
         DependencyValidationError<
           DependencyDestinationOf<TMapping>,
-          DependencySourceOf<TDependencies[DependencyDestinationOf<TMapping>], TMapping['source']>,
+          DependencySourceOf<
+            TDependencies[DependencyDestinationOf<TMapping>],
+            OptionSource<TSystemic[TMapping['component']], TCurrent, TMapping['source']>
+          >,
           TSystemic[TMapping['component']]
         >,
       ] // Wrong type
@@ -146,6 +158,12 @@ type ValidateMappingDependency<
 type DependencyDestinationOf<TMapping extends MappingDependsOnOption<any, any>> = TMapping['destination'] extends string
   ? TMapping['destination']
   : TMapping['component'];
+
+type OptionSource<
+  TRegistration extends Registration<unknown, boolean>,
+  TCurrent extends string,
+  TGiven extends string | undefined,
+> = TGiven extends string ? TGiven : TRegistration['scoped'] extends true ? TCurrent : undefined;
 
 type DependencySourceOf<T, S> = S extends string
   ? S extends keyof T
@@ -171,10 +189,11 @@ type SystemicWithInvalidDependency<TError extends DependencyValidationError<any,
 
 export type SystemicBuild<
   TSystemic extends Record<string, Registration<unknown, boolean>>,
+  TCurrent extends keyof TSystemic & string,
   TDependencies extends Record<string, unknown>,
 > = [RequiredKeys<TDependencies>] extends [never]
-  ? Systemic<TSystemic> & DependsOn<TSystemic, TDependencies>
-  : DependsOn<TSystemic, TDependencies> & IncompleteSystemic<RequiredKeys<TDependencies>>;
+  ? Systemic<TSystemic> & DependsOn<TSystemic, TCurrent, TDependencies>
+  : DependsOn<TSystemic, TCurrent, TDependencies> & IncompleteSystemic<RequiredKeys<TDependencies>>;
 
 type IsComponent<T> = T extends Component<any, any> ? true : T extends CallbackComponent<any, any> ? true : false;
 type ComponentTypeOf<T> = T extends Component<infer C, any> ? C : T extends CallbackComponent<infer CB, any> ? CB : never;
@@ -207,6 +226,7 @@ export interface Systemic<TSystem extends Record<string, Registration>> {
         ? { component: ComponentTypeOf<TComponent>; scoped: Scoped }
         : { component: TComponent; scoped: Scoped };
     },
+    S,
     DependenciesOf<TComponent>
   >;
 
@@ -228,6 +248,7 @@ export interface Systemic<TSystem extends Record<string, Registration>> {
           : { component: TComponent; scoped: Scoped }
         : TSystem[G];
     },
+    S,
     DependenciesOf<TComponent>
   >;
 
@@ -240,6 +261,7 @@ export interface Systemic<TSystem extends Record<string, Registration>> {
         ? { component: ComponentTypeOf<TComponent>; scoped: true }
         : { component: TComponent; scoped: true };
     },
+    'config',
     DependenciesOf<TComponent>
   >;
 
