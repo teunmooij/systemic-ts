@@ -236,9 +236,13 @@ type MergeIntoDefaultComponent<
     >
   : TComponent;
 
-type IsComponent<T> = T extends Component<any, any> ? true : T extends CallbackComponent<any, any> ? true : false;
-type ComponentTypeOf<T> = T extends Component<infer C, any> ? C : T extends CallbackComponent<infer CB, any> ? CB : never;
-type DependenciesOf<T> = T extends Component<any, infer D> ? D : T extends CallbackComponent<any, infer D> ? D : EmptyObject;
+export type IsComponent<T> = T extends Component<any, any> ? true : T extends CallbackComponent<any, any> ? true : false;
+export type ComponentTypeOf<T> = T extends Component<infer C, any> ? C : T extends CallbackComponent<infer CB, any> ? CB : never;
+export type DependenciesOf<T> = T extends Component<any, infer D>
+  ? D
+  : T extends CallbackComponent<any, infer D>
+  ? D
+  : EmptyObject;
 
 /**
  * Systemic system.
@@ -255,7 +259,7 @@ export interface Systemic<TSystem extends Record<string, Registration>> {
    * @param {Component} component the component to be added
    * @param options registration options
    */
-  add<S extends string, TComponent, Scoped extends boolean = false>(
+  add<S extends string, TComponent = unknown, Scoped extends boolean = false>(
     name: S extends keyof TSystem ? never : S, // We don't allow duplicate names
     component: TComponent,
     options?: { scoped?: Scoped },
@@ -271,7 +275,7 @@ export interface Systemic<TSystem extends Record<string, Registration>> {
     DependenciesOf<TComponent>
   >;
   add<S extends string>(
-    name: S,
+    name: S extends keyof TSystem ? never : S, // We don't allow duplicate names,
   ): SystemicBuildDefaultComponent<
     {
       [G in keyof TSystem | S]: G extends keyof TSystem ? TSystem[G] : { component: EmptyObject; scoped: false };
@@ -328,7 +332,7 @@ export interface Systemic<TSystem extends Record<string, Registration>> {
   /**
    * Includes a subsystem into this systemic system
    */
-  include: <TSubSystem extends Record<string, Registration>>(subSystem: Systemic<TSubSystem>) => Systemic<TSystem & TSubSystem>;
+  include<TSubSystem extends Record<string, Registration>>(subSystem: Systemic<TSubSystem>): Systemic<TSystem & TSubSystem>;
 
   /**
    * Starts the system and all of its components
@@ -349,7 +353,7 @@ export interface Systemic<TSystem extends Record<string, Registration>> {
   restart(): Promise<{ [C in keyof TSystem]: TSystem[C]['component'] }>;
 }
 
-interface Registration<Component = unknown, Scoped extends boolean = boolean> {
+export interface Registration<Component = unknown, Scoped extends boolean = boolean> {
   component: Component;
   scoped: Scoped;
 }
