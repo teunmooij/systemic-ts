@@ -110,21 +110,16 @@ type InvalidDependencies<
   ...infer Rest extends DependsOnOption<TDependencies, TSystemic>[],
 ]
   ? [
-      ...ValidateDependency<TSystemic, TCurrent, TDependencies, First>,
+      ...ValidateMappingDependency<TSystemic, TCurrent, TDependencies, ToMappingDependsOnOption<First>>,
       ...InvalidDependencies<TSystemic, TCurrent, TDependencies, Rest>,
     ]
   : [];
 
-type ValidateDependency<
-  TSystemic extends Record<string, Registration<unknown, boolean>>,
-  TCurrent extends keyof TSystemic & string,
-  TDependencies extends Record<string, unknown>,
-  TOption extends DependsOnOption<TDependencies, TSystemic>,
-> = TOption extends SimpleDependsOnOption<TSystemic>
-  ? ValidateMappingDependency<TSystemic, TCurrent, TDependencies, { component: TOption; destination: TOption }>
-  : TOption extends MappingDependsOnOption<keyof TDependencies, TSystemic>
-  ? ValidateMappingDependency<TSystemic, TCurrent, TDependencies, OptionWithDestination<TOption>>
-  : []; // Impossible situation
+type ToMappingDependsOnOption<TOption extends DependsOnOption<any, any>> = TOption extends SimpleDependsOnOption<any>
+  ? { component: TOption; destination: TOption }
+  : TOption extends MappingDependsOnOption<any, any>
+  ? OptionWithDestination<TOption>
+  : never; // Impossible situation
 
 type OptionWithDestination<TOption extends MappingDependsOnOption<any, any>> = Omit<TOption, 'destination'> & {
   destination: DependencyDestinationOf<TOption>;
@@ -136,24 +131,25 @@ type ValidateMappingDependency<
   TDependencies extends Record<string, unknown>,
   TMapping extends { component: string; destination: string; source?: string },
 > = DependencyDestinationOf<TMapping> extends keyof TDependencies
-  ? [TSystemic[TMapping['component']]['component']] extends [
-      DependencySourceOf<
-        TDependencies[DependencyDestinationOf<TMapping>],
-        OptionSource<TSystemic[TMapping['component']], TCurrent, TMapping['source']>
-      >,
-    ]
+  ? [TDependencies[DependencyDestinationOf<TMapping>]] extends [Injected<TSystemic, TCurrent, TMapping>]
     ? [] // Correct dependency
     : [
         DependencyValidationError<
           DependencyDestinationOf<TMapping>,
-          DependencySourceOf<
-            TDependencies[DependencyDestinationOf<TMapping>],
-            OptionSource<TSystemic[TMapping['component']], TCurrent, TMapping['source']>
-          >,
-          TSystemic[TMapping['component']]
+          Injected<TSystemic, TCurrent, TMapping>,
+          TDependencies[DependencyDestinationOf<TMapping>]
         >,
       ] // Wrong type
   : []; // Undexpected dependency
+
+type Injected<
+  TSystemic extends Record<string, Registration<unknown, boolean>>,
+  TCurrent extends keyof TSystemic & string,
+  TMapping extends { component: string; destination: string; source?: string },
+> = PropAt<
+  TSystemic[TMapping['component']]['component'],
+  OptionSource<TSystemic[TMapping['component']], TCurrent, TMapping['source']>
+>;
 
 type DependencyDestinationOf<TMapping extends MappingDependsOnOption<any, any>> = TMapping['destination'] extends string
   ? TMapping['destination']
@@ -165,11 +161,11 @@ type OptionSource<
   TGiven extends string | undefined,
 > = TGiven extends string ? TGiven : TRegistration['scoped'] extends true ? TCurrent : undefined;
 
-type DependencySourceOf<T, S> = S extends string
+type PropAt<T, S> = S extends string
   ? S extends keyof T
     ? T[S]
     : S extends `${infer Key extends keyof T & string}.${infer Subkey}`
-    ? DependencySourceOf<T[Key], Subkey>
+    ? PropAt<T[Key], Subkey>
     : never
   : T;
 
@@ -195,6 +191,51 @@ export type SystemicBuild<
   ? Systemic<TSystemic> & DependsOn<TSystemic, TCurrent, TDependencies>
   : DependsOn<TSystemic, TCurrent, TDependencies> & IncompleteSystemic<RequiredKeys<TDependencies>>;
 
+export type SystemicBuildDefaultComponent<
+  TSystemic extends Record<string, Registration<unknown, boolean>>,
+  TCurrent extends keyof TSystemic & string,
+> = Systemic<TSystemic> & {
+  /**
+   * Specifies which other components the last added components depends on.
+   * When name and type of the dependencies match those available in the system, the dependency can be added by name.
+   * When a dependency is named differently in the system or only part of a component is required as a dependency, a MappingDependsOnOption can be used.
+   */
+  dependsOn: <TNames extends DependsOnOption<EmptyObject, TSystemic>[]>(
+    ...names: TNames
+  ) => SystemicBuildDefaultComponent<
+    {
+      [G in keyof TSystemic]: G extends TCurrent
+        ? {
+            component: MergeIntoDefaultComponent<TSystemic, TCurrent, TNames, TSystemic[TCurrent]['component']>;
+            scoped: false;
+          }
+        : TSystemic[G];
+    },
+    TCurrent
+  >;
+};
+
+type MergeIntoDefaultComponent<
+  TSystemic extends Record<string, Registration<unknown, boolean>>,
+  TCurrent extends keyof TSystemic & string,
+  TNames extends DependsOnOption<EmptyObject, TSystemic>[],
+  TComponent,
+> = TNames extends [
+  infer First extends DependsOnOption<EmptyObject, TSystemic>,
+  ...infer Rest extends DependsOnOption<EmptyObject, TSystemic>[],
+]
+  ? MergeIntoDefaultComponent<
+      TSystemic,
+      TCurrent,
+      Rest,
+      {
+        [K in keyof TComponent | ToMappingDependsOnOption<First>['destination']]: K extends keyof TComponent
+          ? TComponent[K]
+          : Injected<TSystemic, TCurrent, ToMappingDependsOnOption<First>>;
+      }
+    >
+  : TComponent;
+
 type IsComponent<T> = T extends Component<any, any> ? true : T extends CallbackComponent<any, any> ? true : false;
 type ComponentTypeOf<T> = T extends Component<infer C, any> ? C : T extends CallbackComponent<infer CB, any> ? CB : never;
 type DependenciesOf<T> = T extends Component<any, infer D> ? D : T extends CallbackComponent<any, infer D> ? D : EmptyObject;
@@ -214,11 +255,11 @@ export interface Systemic<TSystem extends Record<string, Registration>> {
    * @param {Component} component the component to be added
    * @param options registration options
    */
-  add: <S extends string, TComponent, Scoped extends boolean = false>(
+  add<S extends string, TComponent, Scoped extends boolean = false>(
     name: S extends keyof TSystem ? never : S, // We don't allow duplicate names
-    component?: TComponent,
+    component: TComponent,
     options?: { scoped?: Scoped },
-  ) => SystemicBuild<
+  ): SystemicBuild<
     {
       [G in keyof TSystem | S]: G extends keyof TSystem
         ? TSystem[G]
@@ -229,6 +270,14 @@ export interface Systemic<TSystem extends Record<string, Registration>> {
     S,
     DependenciesOf<TComponent>
   >;
+  add<S extends string>(
+    name: S,
+  ): SystemicBuildDefaultComponent<
+    {
+      [G in keyof TSystem | S]: G extends keyof TSystem ? TSystem[G] : { component: EmptyObject; scoped: false };
+    },
+    S
+  >;
 
   /**
    * Attempting to add the same component twice will result in an error, but sometimes you need to replace existing components with test doubles. Under such circumstances use set instead of add.
@@ -236,11 +285,11 @@ export interface Systemic<TSystem extends Record<string, Registration>> {
    * @param {Component} component the component to be added
    * @param options registration options
    */
-  set: <S extends keyof TSystem & string, TComponent, Scoped extends boolean = false>(
+  set<S extends keyof TSystem & string, TComponent, Scoped extends boolean = false>(
     name: S,
     component: TComponent,
-    options?: { scoped?: boolean },
-  ) => SystemicBuild<
+    options?: { scoped?: Scoped },
+  ): SystemicBuild<
     {
       [G in keyof TSystem]: G extends keyof S
         ? IsComponent<TComponent> extends true
@@ -255,7 +304,7 @@ export interface Systemic<TSystem extends Record<string, Registration>> {
   /**
    * Adds a configuration to the system, which will be available as a scoped dependency named 'config'
    */
-  configure: <TComponent>(component: TComponent) => SystemicBuild<
+  configure<TComponent>(component: TComponent): SystemicBuild<
     TSystem & {
       config: IsComponent<TComponent> extends true
         ? { component: ComponentTypeOf<TComponent>; scoped: true }
@@ -269,12 +318,12 @@ export interface Systemic<TSystem extends Record<string, Registration>> {
    * Removes a component from the system.
    * Removing components during tests can decrease startup time.
    */
-  remove: <S extends string>(name: S) => Systemic<Omit<TSystem, S>>;
+  remove<S extends string>(name: S): Systemic<Omit<TSystem, S>>;
 
   /**
    * Includes a subsystem into this systemic system
    */
-  merge: <TSubSystem extends Record<string, Registration>>(subSystem: Systemic<TSubSystem>) => Systemic<TSystem & TSubSystem>;
+  merge<TSubSystem extends Record<string, Registration>>(subSystem: Systemic<TSubSystem>): Systemic<TSystem & TSubSystem>;
 
   /**
    * Includes a subsystem into this systemic system
