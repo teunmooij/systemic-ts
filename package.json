@@ -50,6 +50,6 @@
   },
   "homepage": "https://github.com/teunmooij/typescript-module-template#readme",
   "dependencies": {
-    "debug": "^4.3.4"
+    "debug": "^4.3.5"
   }
 }
