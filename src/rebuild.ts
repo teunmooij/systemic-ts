@@ -2,34 +2,175 @@ import initDebug from 'debug';
 import type { EmptyObject } from 'type-fest';
 
 import { randomName } from './utils';
-import { CallbackComponent, Component, Systemic, SystemicBuild } from './types';
+import {
+  Component,
+  ComponentTypeOf,
+  Definition,
+  DependenciesOf,
+  DependsOnOption,
+  IsComponent,
+  Registration,
+  Systemic,
+  SystemicBuild,
+} from './types';
 
-export class System<T extends Record<string, unknown> = EmptyObject> implements Systemic<T> {
+// TODO: function components
+// TODO: sync components
+
+const debug = initDebug('systemic:index');
+
+const defaultComponent = {
+  async start(dependencies: Record<string, unknown>) {
+    return dependencies;
+  },
+};
+
+export class System<TSystem extends Record<string, Registration> = EmptyObject> implements Systemic<TSystem> {
   public readonly name: string;
   private definitions = new Map<string, Definition>();
+  private currentDefinition: Definition | null = null;
 
-  constructor(options: { name?: string }) {
-    this.name = options.name || randomName();
+  constructor(options?: { name?: string }) {
+    this.name = options?.name || randomName();
   }
 
-  public add<S extends string, TComponent, TDependencies extends Record<string, unknown> = EmptyObject>(
-    name: S extends keyof T ? never : S,
-    component?: Component<TComponent, TDependencies> | CallbackComponent<TComponent, TDependencies> | TComponent,
-    options?: { scoped?: boolean },
+  public add: Systemic<TSystem>['add'] = <S extends string, TComponent = unknown, Scoped extends boolean = false>(
+    name: S extends keyof TSystem ? never : S,
+    component?: TComponent,
+    options?: { scoped?: Scoped },
+  ) => {
+    debug(`Adding component ${name} to system ${this.name}`);
+
+    if (this.definitions.has(name)) {
+      throw new Error(`Duplicate component: ${name}`);
+    }
+
+    if (!component) {
+      return this.add(name, defaultComponent);
+    }
+
+    return this._set(name, component, options?.scoped);
+  };
+
+  public set<S extends keyof TSystem & string, TComponent, Scoped extends boolean = false>(
+    name: S,
+    component: TComponent,
+    options?: { scoped?: Scoped },
   ): SystemicBuild<
     {
-      [G in keyof T | S]: G extends keyof T ? T[G] : TComponent;
+      [G in keyof TSystem]: G extends keyof S
+        ? IsComponent<TComponent> extends true
+          ? { component: ComponentTypeOf<TComponent>; scoped: Scoped }
+          : { component: TComponent; scoped: Scoped }
+        : TSystem[G];
     },
-    TDependencies
+    S,
+    DependenciesOf<TComponent>
   > {
+    debug(`Setting component ${name} on system ${this.name}`);
+
+    return this._set(name, component, options?.scoped);
+  }
+
+  private _set(name: string, component: unknown, scoped = false) {
+    const definition = isComponent(component)
+      ? { component, dependencies: [], scoped }
+      : { component: wrap(component), dependencies: [], scoped };
+
+    this.definitions.set(name, definition);
+    this.currentDefinition = definition;
+
     return this as any;
   }
 
-  private _set(name: string);
+  public configure<TComponent>(component: TComponent): SystemicBuild<
+    TSystem & {
+      config: IsComponent<TComponent> extends true
+        ? { component: ComponentTypeOf<TComponent>; scoped: true }
+        : { component: TComponent; scoped: true };
+    },
+    'config',
+    DependenciesOf<TComponent>
+  > {
+    debug(`Adding component config to system ${this.name}`);
+
+    return this._set('config', component, true);
+  }
+
+  public remove<S extends string>(name: S): Systemic<Omit<TSystem, S>> {
+    debug(`Removing component ${name} from system ${this.name}`);
+
+    this.definitions.delete(name);
+    return this as any;
+  }
+
+  public merge<TSubSystem extends Record<string, Registration<unknown, boolean>>>(
+    subSystem: Systemic<TSubSystem>,
+  ): Systemic<TSystem & TSubSystem> {
+    return this.include(subSystem);
+  }
+
+  public include<TSubSystem extends Record<string, Registration<unknown, boolean>>>(
+    subSystem: Systemic<TSubSystem>,
+  ): Systemic<TSystem & TSubSystem> {
+    debug(`Including definitions from sub system ${subSystem.name} into system ${this.name}`);
+
+    for (const [name, definition] of subSystem._definitions.entries()) {
+      this.definitions.set(name, definition);
+    }
+
+    return this as any;
+  }
+
+  public dependsOn<TNames extends DependsOnOption<any, any>[]>(...dependencies: TNames) {
+    if (!this.currentDefinition) {
+      throw new Error('You must add a component before calling dependsOn');
+    }
+
+    this.currentDefinition.dependencies.push(
+      ...dependencies.map(dependency =>
+        typeof dependency === 'string'
+          ? { component: dependency, destination: dependency, optional: false }
+          : { destination: dependency.component, optional: false, ...dependency },
+      ),
+    );
+    return this as any;
+  }
+
+  public start(callback: (error: Error | null, result?: TSystem) => void): void;
+  public start(): Promise<{ [C in keyof TSystem]: TSystem[C]['component'] }>;
+  public start(
+    callback?: (error: Error | null, result?: TSystem) => void,
+  ): void | Promise<{ [C in keyof TSystem]: TSystem[C]['component'] }> {
+    debug(`Starting system ${this.name}`);
+    throw new Error('Method not implemented.');
+  }
+
+  public stop(callback: (error: Error | null) => void): void;
+  public stop(): Promise<void>;
+  public stop(callback?: (error: Error | null) => void): void | Promise<void> {
+    throw new Error('Method not implemented.');
+  }
+
+  public restart(callback: (error: Error | null, result?: TSystem) => void): void;
+  public restart(): Promise<{ [C in keyof TSystem]: TSystem[C]['component'] }>;
+  public restart(
+    callback?: (error: Error | null, result?: TSystem) => void,
+  ): void | Promise<{ [C in keyof TSystem]: TSystem[C]['component'] }> {
+    throw new Error('Method not implemented.');
+  }
+
+  public get _definitions() {
+    return this.definitions;
+  }
 }
 
-interface Definition {
-  scoped?: boolean;
-  name: Component<any>;
-  dependencies: string[];
+function isComponent(component: any): component is { start: any } {
+  return 'start' in component;
+}
+
+function wrap<TComponent>(component: TComponent): Component<TComponent> {
+  return {
+    start: async () => component,
+  };
 }

@@ -30,37 +30,32 @@ type MissingDependencies<TDependencies extends Record<string, unknown>, TNames e
  * @template TComponent The type of the component that will be exposed by the systemic system
  * @template TDependencies The type of the dependencies this component depends on
  */
-export type Component<TComponent, TDependencies extends Record<string, unknown> = EmptyObject> = {
-  /**
-   * Starts this component
-   * @param {TDependencies} dependencies The dependencies of this component
-   * @returns A started component
-   */
-  start: (dependencies: TDependencies) => Promise<TComponent>;
-  /**
-   * Stops this component
-   */
-  stop?: () => Promise<void>;
-};
-
-/**
- * Systemic component that can be added to the systemic system.
- * @template TComponent The type of the component that will be exposed by the systemic system
- * @template TDependencies The type of the dependencies this component depends on
- */
-export type CallbackComponent<TComponent, TDependencies extends Record<string, unknown> = EmptyObject> = {
-  /**
-   * Starts this component
-   * @param {TDependencies} dependencies The dependencies of this component
-   * @param callback Callback receives the component after it has been built
-   */
-  start: (dependencies: TDependencies, callback: (err: any, component: TComponent) => void) => void;
-  /**
-   * Stops this component
-   * @param callback Callback is called when the component has been stopped
-   */
-  stop?: (callback: (err?: any) => void) => void;
-};
+export type Component<TComponent, TDependencies extends Record<string, unknown> = EmptyObject> =
+  | {
+      /**
+       * Starts this component
+       * @param {TDependencies} dependencies The dependencies of this component
+       * @returns A started component
+       */
+      start: (dependencies: TDependencies) => Promise<TComponent>;
+      /**
+       * Stops this component
+       */
+      stop?: () => Promise<void>;
+    }
+  | {
+      /**
+       * Starts this component
+       * @param {TDependencies} dependencies The dependencies of this component
+       * @param callback Callback receives the component after it has been built
+       */
+      start: (dependencies: TDependencies, callback: (err: any, component: TComponent) => void) => void;
+      /**
+       * Stops this component
+       * @param callback Callback is called when the component has been stopped
+       */
+      stop?: (callback: (err?: any) => void) => void;
+    };
 
 type SimpleDependsOnOption<TSystemic> = keyof TSystemic & string;
 type MappingDependsOnOption<TDependencyKeys, TSystemic> = TDependencyKeys extends keyof TSystemic
@@ -76,9 +71,9 @@ type MappingDependsOnOption<TDependencyKeys, TSystemic> = TDependencyKeys extend
       optional?: boolean;
       source?: string;
     };
-type DependsOnOption<TDependencies, TSystemic> =
+export type DependsOnOption<TDependencies, TSystemic> =
   | SimpleDependsOnOption<TSystemic>
-  | MappingDependsOnOption<TDependencies, TSystemic>;
+  | MappingDependsOnOption<keyof TDependencies, TSystemic>;
 
 type DependsOn<
   TSystemic extends Record<string, Registration<unknown, boolean>>,
@@ -236,13 +231,9 @@ type MergeIntoDefaultComponent<
     >
   : TComponent;
 
-export type IsComponent<T> = T extends Component<any, any> ? true : T extends CallbackComponent<any, any> ? true : false;
-export type ComponentTypeOf<T> = T extends Component<infer C, any> ? C : T extends CallbackComponent<infer CB, any> ? CB : never;
-export type DependenciesOf<T> = T extends Component<any, infer D>
-  ? D
-  : T extends CallbackComponent<any, infer D>
-  ? D
-  : EmptyObject;
+export type IsComponent<T> = T extends Component<any, any> ? true : false;
+export type ComponentTypeOf<T> = T extends Component<infer C, any> ? C : never;
+export type DependenciesOf<T> = T extends Component<any, infer D> ? D : EmptyObject;
 
 /**
  * Systemic system.
@@ -351,9 +342,22 @@ export interface Systemic<TSystem extends Record<string, Registration>> {
    */
   restart(callback: (error: Error | null, result?: TSystem) => void): void;
   restart(): Promise<{ [C in keyof TSystem]: TSystem[C]['component'] }>;
+
+  readonly _definitions: Map<string, Definition>;
 }
 
 export interface Registration<Component = unknown, Scoped extends boolean = boolean> {
   component: Component;
   scoped: Scoped;
+}
+
+export interface Definition {
+  scoped?: boolean;
+  component: Component<any>;
+  dependencies: {
+    component: string;
+    destination: string;
+    optional: boolean;
+    source?: string;
+  }[];
 }
