@@ -30,32 +30,36 @@ type MissingDependencies<TDependencies extends Record<string, unknown>, TNames e
  * @template TComponent The type of the component that will be exposed by the systemic system
  * @template TDependencies The type of the dependencies this component depends on
  */
-export type Component<TComponent, TDependencies extends Record<string, unknown> = EmptyObject> =
-  | {
-      /**
-       * Starts this component
-       * @param {TDependencies} dependencies The dependencies of this component
-       * @returns A started component
-       */
-      start: (dependencies: TDependencies) => Promise<TComponent>;
-      /**
-       * Stops this component
-       */
-      stop?: () => Promise<void>;
-    }
-  | {
-      /**
-       * Starts this component
-       * @param {TDependencies} dependencies The dependencies of this component
-       * @param callback Callback receives the component after it has been built
-       */
-      start: (dependencies: TDependencies, callback: (err: any, component: TComponent) => void) => void;
-      /**
-       * Stops this component
-       * @param callback Callback is called when the component has been stopped
-       */
-      stop?: (callback: (err?: any) => void) => void;
-    };
+export type Component<TComponent, TDependencies extends Record<string, unknown> = EmptyObject> = {
+  /**
+   * Starts this component
+   * @param {TDependencies} dependencies The dependencies of this component
+   * @returns A started component
+   */
+  start: (dependencies: TDependencies) => Promise<TComponent>;
+  /**
+   * Stops this component
+   */
+  stop?: () => Promise<void>;
+};
+
+/**
+ * @deprecated Please use `Component instead`.
+ * Legacy callback based components can be converted to promise based components using the `promisifyComponent` function.
+ */
+export type CallbackComponent<TComponent, TDependencies extends Record<string, unknown> = EmptyObject> = {
+  /**
+   * Starts this component
+   * @param {TDependencies} dependencies The dependencies of this component
+   * @param callback Callback receives the component after it has been built
+   */
+  start: (dependencies: TDependencies, callback: (err: any, component: TComponent) => void) => void;
+  /**
+   * Stops this component
+   * @param callback Callback is called when the component has been stopped
+   */
+  stop?: (callback: (err?: any) => void) => void;
+};
 
 type SimpleDependsOnOption<TSystemic> = keyof TSystemic & string;
 type MappingDependsOnOption<TDependencyKeys, TSystemic> = TDependencyKeys extends keyof TSystemic
@@ -328,19 +332,16 @@ export interface Systemic<TSystem extends Record<string, Registration>> {
   /**
    * Starts the system and all of its components
    */
-  start(callback: (error: Error | null, result?: SystemOf<TSystem>) => void): void;
   start(): Promise<SystemOf<TSystem>>;
 
   /**
    * Stops the system and all of its components
    */
-  stop(callback: (error: Error | null) => void): void;
   stop(): Promise<void>;
 
   /**
    * Restarts the system and all of its components
    */
-  restart(callback: (error: Error | null, result?: SystemOf<TSystem>) => void): void;
   restart(): Promise<SystemOf<TSystem>>;
 
   readonly _definitions: Map<string, Definition>;

@@ -138,44 +138,18 @@ export class System<TSystem extends Record<string, Registration> = EmptyObject> 
     return this as any;
   }
 
-  public start(callback: (error: Error | null, result?: SystemOf<TSystem>) => void): void;
-  public start(): Promise<SystemOf<TSystem>>;
-  public start(callback?: (error: Error | null, result?: SystemOf<TSystem>) => void): void | Promise<SystemOf<TSystem>> {
+  public start(): Promise<SystemOf<TSystem>> {
     debug(`Starting system ${this.name}`);
     throw new Error('Method not implemented.');
   }
 
-  public stop(callback: (error: Error | null) => void): void;
-  public stop(): Promise<void>;
-  public stop(callback?: (error: Error | null) => void): void | Promise<void> {
+  public stop(): Promise<void> {
     throw new Error('Method not implemented.');
   }
 
-  public restart(callback: (error: Error | null, result?: SystemOf<TSystem>) => void): void;
-  public restart(): Promise<SystemOf<TSystem>>;
-  public restart(callback?: (error: Error | null, result?: SystemOf<TSystem>) => void): void | Promise<SystemOf<TSystem>> {
-    const p = this.stop().then(() => this.start());
-    if (callback) {
-      p.then(this.immediateCallback(callback)).catch(this.immediateError(callback));
-    } else {
-      return p;
-    }
-  }
-
-  private immediateCallback(cb: (error: Error | null, result?: SystemOf<TSystem>) => void) {
-    return (resolved: SystemOf<TSystem>) => {
-      setImmediate(() => {
-        cb(null, resolved);
-      });
-    };
-  }
-
-  private immediateError(cb: (error: Error | null) => void) {
-    return (err: any) => {
-      setImmediate(() => {
-        cb(err);
-      });
-    };
+  public async restart(): Promise<SystemOf<TSystem>> {
+    await this.stop();
+    return this.start();
   }
 
   public get _definitions() {
