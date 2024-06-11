@@ -328,8 +328,8 @@ export interface Systemic<TSystem extends Record<string, Registration>> {
   /**
    * Starts the system and all of its components
    */
-  start(callback: (error: Error | null, result?: TSystem) => void): void;
-  start(): Promise<{ [C in keyof TSystem]: TSystem[C]['component'] }>;
+  start(callback: (error: Error | null, result?: SystemOf<TSystem>) => void): void;
+  start(): Promise<SystemOf<TSystem>>;
 
   /**
    * Stops the system and all of its components
@@ -340,11 +340,13 @@ export interface Systemic<TSystem extends Record<string, Registration>> {
   /**
    * Restarts the system and all of its components
    */
-  restart(callback: (error: Error | null, result?: TSystem) => void): void;
-  restart(): Promise<{ [C in keyof TSystem]: TSystem[C]['component'] }>;
+  restart(callback: (error: Error | null, result?: SystemOf<TSystem>) => void): void;
+  restart(): Promise<SystemOf<TSystem>>;
 
   readonly _definitions: Map<string, Definition>;
 }
+
+export type SystemOf<TSystem extends Record<string, Registration>> = { [C in keyof TSystem]: TSystem[C]['component'] };
 
 export interface Registration<Component = unknown, Scoped extends boolean = boolean> {
   component: Component;

@@ -10,6 +10,7 @@ import {
   DependsOnOption,
   IsComponent,
   Registration,
+  SystemOf,
   Systemic,
   SystemicBuild,
 } from './types';
@@ -137,11 +138,9 @@ export class System<TSystem extends Record<string, Registration> = EmptyObject> 
     return this as any;
   }
 
-  public start(callback: (error: Error | null, result?: TSystem) => void): void;
-  public start(): Promise<{ [C in keyof TSystem]: TSystem[C]['component'] }>;
-  public start(
-    callback?: (error: Error | null, result?: TSystem) => void,
-  ): void | Promise<{ [C in keyof TSystem]: TSystem[C]['component'] }> {
+  public start(callback: (error: Error | null, result?: SystemOf<TSystem>) => void): void;
+  public start(): Promise<SystemOf<TSystem>>;
+  public start(callback?: (error: Error | null, result?: SystemOf<TSystem>) => void): void | Promise<SystemOf<TSystem>> {
     debug(`Starting system ${this.name}`);
     throw new Error('Method not implemented.');
   }
@@ -152,12 +151,31 @@ export class System<TSystem extends Record<string, Registration> = EmptyObject> 
     throw new Error('Method not implemented.');
   }
 
-  public restart(callback: (error: Error | null, result?: TSystem) => void): void;
-  public restart(): Promise<{ [C in keyof TSystem]: TSystem[C]['component'] }>;
-  public restart(
-    callback?: (error: Error | null, result?: TSystem) => void,
-  ): void | Promise<{ [C in keyof TSystem]: TSystem[C]['component'] }> {
-    throw new Error('Method not implemented.');
+  public restart(callback: (error: Error | null, result?: SystemOf<TSystem>) => void): void;
+  public restart(): Promise<SystemOf<TSystem>>;
+  public restart(callback?: (error: Error | null, result?: SystemOf<TSystem>) => void): void | Promise<SystemOf<TSystem>> {
+    const p = this.stop().then(() => this.start());
+    if (callback) {
+      p.then(this.immediateCallback(callback)).catch(this.immediateError(callback));
+    } else {
+      return p;
+    }
+  }
+
+  private immediateCallback(cb: (error: Error | null, result?: SystemOf<TSystem>) => void) {
+    return (resolved: SystemOf<TSystem>) => {
+      setImmediate(() => {
+        cb(null, resolved);
+      });
+    };
+  }
+
+  private immediateError(cb: (error: Error | null) => void) {
+    return (err: any) => {
+      setImmediate(() => {
+        cb(err);
+      });
+    };
   }
 
   public get _definitions() {
