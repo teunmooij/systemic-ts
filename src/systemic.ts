@@ -1,7 +1,7 @@
 import initDebug from 'debug';
 
-import { randomName } from './utils';
-import {
+import { randomName } from './util';
+import type {
   Component,
   ComponentTypeOf,
   Definition,

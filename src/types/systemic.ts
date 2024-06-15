@@ -1,10 +1,7 @@
-// eslint-disable-next-line @typescript-eslint/ban-types
-export type EmptyObject = {};
-
-type RequiredKeys<T> = {
-  [K in keyof T]-?: EmptyObject extends Pick<T, K> ? never : K;
-}[keyof T] &
-  string;
+import type { ComponentTypeOf, DependenciesOf, IsComponent } from './component';
+import type { Definition, Registration } from './definition';
+import type { SystemOf } from './system';
+import type { EmptyObject, PropAt, RequiredKeys } from './util';
 
 type NameToDestination<TOption> = TOption extends {
   component: infer Component;
@@ -25,42 +22,6 @@ type MissingDependencies<TDependencies extends Record<string, unknown>, TNames e
     ? MissingDependencies<Omit<TDependencies, NameToDestination<Name>>, Rest>
     : MissingDependencies<TDependencies, Rest>
   : TDependencies;
-
-/**
- * Systemic component that can be added to the systemic system.
- * @template TComponent The type of the component that will be exposed by the systemic system
- * @template TDependencies The type of the dependencies this component depends on
- */
-export type Component<TComponent, TDependencies extends Record<string, unknown> = EmptyObject> = {
-  /**
-   * Starts this component
-   * @param {TDependencies} dependencies The dependencies of this component
-   * @returns A started component
-   */
-  start: (dependencies: TDependencies) => Promise<TComponent>;
-  /**
-   * Stops this component
-   */
-  stop?: () => Promise<void>;
-};
-
-/**
- * @deprecated Please use `Component instead`.
- * Legacy callback based components can be converted to promise based components using the `promisifyComponent` function.
- */
-export type CallbackComponent<TComponent, TDependencies extends Record<string, unknown> = EmptyObject> = {
-  /**
-   * Starts this component
-   * @param {TDependencies} dependencies The dependencies of this component
-   * @param callback Callback receives the component after it has been built
-   */
-  start: (dependencies: TDependencies, callback: (err: any, component: TComponent) => void) => void;
-  /**
-   * Stops this component
-   * @param callback Callback is called when the component has been stopped
-   */
-  stop?: (callback: (err?: any) => void) => void;
-};
 
 type SimpleDependsOnOption<TSystemic> = keyof TSystemic & string;
 type MappingDependsOnOption<TDependencyKeys, TSystemic> = TDependencyKeys extends keyof TSystemic
@@ -161,14 +122,6 @@ type OptionSource<
   TGiven extends string | undefined,
 > = TGiven extends string ? TGiven : TRegistration['scoped'] extends true ? TCurrent : undefined;
 
-type PropAt<T, S> = S extends string
-  ? S extends keyof T
-    ? T[S]
-    : S extends `${infer Key extends keyof T & string}.${infer Subkey}`
-    ? PropAt<T[Key], Subkey>
-    : never
-  : T;
-
 type DependencyValidationError<TName extends string, TExpected, TActual> = [TName, TExpected, TActual];
 
 type IncompleteSystemic<TMissing extends string> = {
@@ -235,10 +188,6 @@ type MergeIntoDefaultComponent<
       }
     >
   : TComponent;
-
-export type IsComponent<T> = T extends Component<any, any> ? true : false;
-export type ComponentTypeOf<T> = T extends Component<infer C, any> ? C : never;
-export type DependenciesOf<T> = T extends Component<any, infer D> ? D : EmptyObject;
 
 /**
  * Systemic system.
@@ -347,56 +296,3 @@ export interface Systemic<TSystem extends Record<string, Registration>> {
 
   readonly _definitions: Map<string, Definition>;
 }
-
-export interface Registration<Component = unknown, Scoped extends boolean = boolean> {
-  component: Component;
-  scoped: Scoped;
-}
-
-export interface Definition {
-  scoped?: boolean;
-  component: Component<any>;
-  dependencies: {
-    component: string;
-    destination: string;
-    optional: boolean;
-    source?: string;
-  }[];
-}
-
-// Build the system type from the system definition
-export type SystemOf<TSystem extends Record<string, Registration>> = BuildSystem<UnionToTuple<ComponentEntries<TSystem>>>;
-
-type UnionToTuple<T, L = LastOf<T>, N = [T] extends [never] ? true : false> = true extends N
-  ? []
-  : Push<UnionToTuple<Exclude<T, L>>, L>;
-
-type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (k: infer I) => void ? I : never;
-type LastOf<T> = UnionToIntersection<T extends any ? () => T : never> extends () => infer R ? R : never;
-
-type Push<T extends any[], V> = [...T, V];
-
-type ComponentEntries<TSystem extends Record<string, Registration>> = keyof TSystem extends infer P
-  ? P extends keyof TSystem & string
-    ? [P, Required<TSystem>[P] extends never ? undefined : Required<TSystem>[P]['component']]
-    : never
-  : never;
-
-type SetNestedProp<T, K extends string, V> = K extends `${infer Key}.${infer Rest}`
-  ? {
-      [P in Key | keyof T]: P extends Exclude<keyof T, Key>
-        ? T[P]
-        : SetNestedProp<T extends Record<string, unknown> ? T[Key] : EmptyObject, Rest, V>;
-    }
-  : {
-      [P in K | keyof T]: P extends Exclude<keyof T, K> ? T[P] : V;
-    };
-
-type BuildSystem<TSystem extends unknown[], Acc extends Record<string, unknown> = EmptyObject> = TSystem extends [
-  infer TEntry,
-  ...infer Rest,
-]
-  ? TEntry extends [infer TName extends string, infer TComponent]
-    ? BuildSystem<Rest, SetNestedProp<Acc, TName, TComponent>>
-    : never
-  : Acc;

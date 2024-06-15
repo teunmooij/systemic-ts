@@ -1,4 +1,4 @@
-import { CallbackComponent, Component, Registration, SystemOf, Systemic } from './types';
+import { CallbackComponent, Component, Registration, SystemOf, Systemic } from '../types';
 import { promisify } from 'node:util';
 
 export function randomName() {
