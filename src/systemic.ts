@@ -17,6 +17,7 @@ import type {
 
 // TODO: function components
 // TODO: sync components
+// TODO: parallel component starting/stopping
 
 const debug = initDebug('systemic:index');
 
@@ -28,6 +29,7 @@ const defaultComponent = {
 
 export class System<TSystem extends Record<string, Registration> = EmptyObject> implements Systemic<TSystem> {
   public readonly name: string;
+
   private definitions = new Map<string, Definition>();
   private currentDefinition: Definition | null = null;
 

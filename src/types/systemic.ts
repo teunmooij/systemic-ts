@@ -41,7 +41,7 @@ export type DependsOnOption<TDependencies, TSystemic> =
   | SimpleDependsOnOption<TSystemic>
   | MappingDependsOnOption<keyof TDependencies, TSystemic>;
 
-type DependsOn<
+export type DependsOn<
   TSystemic extends Record<string, Registration<unknown, boolean>>,
   TCurrent extends keyof TSystemic & string,
   TDependencies extends Record<string, unknown>,
@@ -97,8 +97,8 @@ type ValidateMappingDependency<
     : [
         DependencyValidationError<
           DependencyDestinationOf<TMapping>,
-          Injected<TSystemic, TCurrent, TMapping>,
-          TDependencies[DependencyDestinationOf<TMapping>]
+          TDependencies[DependencyDestinationOf<TMapping>],
+          Injected<TSystemic, TCurrent, TMapping>
         >,
       ] // Wrong type
   : []; // Undexpected dependency
@@ -124,11 +124,11 @@ type OptionSource<
 
 type DependencyValidationError<TName extends string, TExpected, TActual> = [TName, TExpected, TActual];
 
-type IncompleteSystemic<TMissing extends string> = {
+export type IncompleteSystemic<TMissing extends string> = {
   [X in keyof Systemic<any>]: (error: `Please add missing dependency ${TMissing}`) => void;
 };
 
-type SystemicWithInvalidDependency<TError extends DependencyValidationError<any, any, any>> = {
+export type SystemicWithInvalidDependency<TError extends DependencyValidationError<any, any, any>> = {
   [X in keyof Systemic<any>]: (
     error: `Componenent "${TError[0]}" in the system is not of the required type`,
     expected: TError[1],
@@ -196,7 +196,7 @@ export interface Systemic<TSystem extends Record<string, Registration>> {
   /**
    * The name of the system
    */
-  name: string;
+  readonly name: string;
 
   /**
    * Adds a component to the system
