@@ -1,5 +1,4 @@
-import { CallbackComponent, Component, Registration, SystemOf, Systemic } from '../types';
-import { promisify } from 'node:util';
+import { Registration, SystemOf, Systemic } from '../types';
 
 export function randomName() {
   return `Z-${Math.floor(Math.random() * 100000000) + 1}`;
@@ -53,44 +52,4 @@ export function setProp(obj: any, key: string, value: any) {
   const keyParts = key.split('.');
   if (!obj[keyParts[0]]) obj[keyParts[0]] = {};
   setProp(obj[keyParts[0]], keyParts.slice(1).join('.'), value);
-}
-
-export function promisifyComponent<TComponent, TDependencies extends Record<string, unknown>>(
-  component: CallbackComponent<TComponent, TDependencies>,
-): Component<TComponent, TDependencies> {
-  return {
-    start: promisify(component.start),
-    stop: component.stop && promisify(component.stop),
-  };
-}
-
-export function asCallbackSystem<TSystem extends Record<string, Registration>>(system: Systemic<TSystem>) {
-  return {
-    ...system,
-    start: (callback: (error: Error | null, result?: SystemOf<TSystem>) => void) => {
-      system.start().then(immediateCallback(callback)).catch(immediateError(callback));
-    },
-    stop: (callback: (error: Error | null) => void) => {
-      system.stop().then(immediateCallback(callback)).catch(immediateError(callback));
-    },
-    restart: (callback: (error: Error | null, result?: SystemOf<TSystem>) => void) => {
-      system.restart().then(immediateCallback(callback)).catch(immediateError(callback));
-    },
-  };
-}
-
-function immediateCallback<T>(cb: (error: Error | null, result?: T) => void) {
-  return (resolved: T) => {
-    setImmediate(() => {
-      cb(null, resolved);
-    });
-  };
-}
-
-function immediateError(cb: (error: Error | null) => void) {
-  return (err: any) => {
-    setImmediate(() => {
-      cb(err);
-    });
-  };
 }
