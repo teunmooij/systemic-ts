@@ -27,7 +27,15 @@ export type SetNestedProp<Source, Key extends string, Value> = Key extends `${in
   ? {
       [P in Prop | keyof Source]: P extends Exclude<keyof Source, Prop>
         ? Source[P]
-        : SetNestedProp<Source extends Record<string, unknown> ? Source[Prop] : EmptyObject, Rest, Value>;
+        : SetNestedProp<
+            Source extends Record<string, unknown>
+              ? Source[Prop] extends Record<string, unknown>
+                ? Source[Prop]
+                : EmptyObject
+              : EmptyObject,
+            Rest,
+            Value
+          >;
     }
   : {
       [P in Key | keyof Source]: P extends Exclude<keyof Source, Key> ? Source[P] : Value;
