@@ -1,7 +1,6 @@
 import initDebug from 'debug';
-import type { EmptyObject } from 'type-fest';
 import { randomName, isFunction, arraysIntersection, hasProp, getProp, setProp } from './utils';
-import type { Systemic } from './types';
+import type { Systemic, EmptyObject } from './types';
 
 const debug = initDebug('systemic:index');
 

@@ -1,5 +1,4 @@
 import initDebug from 'debug';
-import type { EmptyObject } from 'type-fest';
 
 import { randomName } from './utils';
 import {
@@ -8,6 +7,7 @@ import {
   Definition,
   DependenciesOf,
   DependsOnOption,
+  EmptyObject,
   IsComponent,
   Registration,
   SystemOf,

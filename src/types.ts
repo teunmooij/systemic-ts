@@ -1,4 +1,5 @@
-import type { EmptyObject } from 'type-fest';
+// eslint-disable-next-line @typescript-eslint/ban-types
+export type EmptyObject = {};
 
 type RequiredKeys<T> = {
   [K in keyof T]-?: EmptyObject extends Pick<T, K> ? never : K;
@@ -347,8 +348,6 @@ export interface Systemic<TSystem extends Record<string, Registration>> {
   readonly _definitions: Map<string, Definition>;
 }
 
-export type SystemOf<TSystem extends Record<string, Registration>> = { [C in keyof TSystem]: TSystem[C]['component'] };
-
 export interface Registration<Component = unknown, Scoped extends boolean = boolean> {
   component: Component;
   scoped: Scoped;
@@ -364,3 +363,40 @@ export interface Definition {
     source?: string;
   }[];
 }
+
+// Build the system type from the system definition
+export type SystemOf<TSystem extends Record<string, Registration>> = BuildSystem<UnionToTuple<ComponentEntries<TSystem>>>;
+
+type UnionToTuple<T, L = LastOf<T>, N = [T] extends [never] ? true : false> = true extends N
+  ? []
+  : Push<UnionToTuple<Exclude<T, L>>, L>;
+
+type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (k: infer I) => void ? I : never;
+type LastOf<T> = UnionToIntersection<T extends any ? () => T : never> extends () => infer R ? R : never;
+
+type Push<T extends any[], V> = [...T, V];
+
+type ComponentEntries<TSystem extends Record<string, Registration>> = keyof TSystem extends infer P
+  ? P extends keyof TSystem & string
+    ? [P, Required<TSystem>[P] extends never ? undefined : Required<TSystem>[P]['component']]
+    : never
+  : never;
+
+type SetNestedProp<T, K extends string, V> = K extends `${infer Key}.${infer Rest}`
+  ? {
+      [P in Key | keyof T]: P extends Exclude<keyof T, Key>
+        ? T[P]
+        : SetNestedProp<T extends Record<string, unknown> ? T[Key] : EmptyObject, Rest, V>;
+    }
+  : {
+      [P in K | keyof T]: P extends Exclude<keyof T, K> ? T[P] : V;
+    };
+
+type BuildSystem<TSystem extends unknown[], Acc extends Record<string, unknown> = EmptyObject> = TSystem extends [
+  infer TEntry,
+  ...infer Rest,
+]
+  ? TEntry extends [infer TName extends string, infer TComponent]
+    ? BuildSystem<Rest, SetNestedProp<Acc, TName, TComponent>>
+    : never
+  : Acc;
