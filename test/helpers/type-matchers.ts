@@ -22,15 +22,9 @@ export const expectTypes = <TActual, TExpected>(): Matcher<TActual, TExpected> =
   } as Matcher<TActual, TExpected>);
 
 type Matcher<TActual, TExpected> = {
-  toBeEqual: [TExpected] extends [TActual]
-    ? [TActual] extends [TExpected]
-      ? IsAny<TActual> extends IsAny<TExpected>
-        ? () => void
-        : IsAny<TActual> extends true
-        ? 'Actual is any'
-        : 'Expected is any'
-      : 'Actual does not extend Expected'
-    : 'Expected does not extend Actual';
+  toBeEqual: [TExpected, TActual, IsAny<TActual>] extends [TActual, TExpected, IsAny<TExpected>]
+    ? () => void
+    : (error: 'Types are not equal', expected: TExpected, actual: TActual) => void;
 };
 
 type BooleanMatcher<TActual extends boolean> = TActual extends true

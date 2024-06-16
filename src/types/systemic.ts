@@ -1,27 +1,22 @@
 import type { ComponentTypeOf, DependenciesOf, IsComponent } from './component';
 import type { Definition, Registration } from './definition';
 import type { SystemOf } from './system';
-import type { EmptyObject, PropAt, RequiredKeys } from './util';
+import type { DeepRequiredOnly, DeleteProps, EmptyObject, PropAt, RequiredKeys, StripEmptyObjectsRecursively } from './util';
 
-type NameToDestination<TOption> = TOption extends {
+type DependencyDestinationOf<TOption> = TOption extends {
   component: infer Component;
   destination?: infer Destination;
 }
   ? unknown extends Destination
     ? Component
     : Destination
-  : TOption extends string | number | symbol
+  : TOption extends PropertyKey
   ? TOption
   : never;
 
-type MissingDependencies<TDependencies extends Record<string, unknown>, TNames extends unknown[]> = TNames extends [
-  infer Name,
-  ...infer Rest,
-]
-  ? NameToDestination<Name> extends keyof TDependencies
-    ? MissingDependencies<Omit<TDependencies, NameToDestination<Name>>, Rest>
-    : MissingDependencies<TDependencies, Rest>
-  : TDependencies;
+type DependencyDestinationsOf<TOptions> = TOptions extends [infer First, ...infer Rest]
+  ? [DependencyDestinationOf<First>, ...DependencyDestinationsOf<Rest>]
+  : [];
 
 type SimpleDependsOnOption<TSystemic> = keyof TSystemic & string;
 type MappingDependsOnOption<TDependencyKeys, TSystemic> = TDependencyKeys extends keyof TSystemic
@@ -58,7 +53,11 @@ export type DependsOn<
     ...any[],
   ]
     ? SystemicWithInvalidDependency<First>
-    : SystemicBuild<TSystemic, TCurrent, MissingDependencies<TDependencies, TNames>>;
+    : SystemicBuild<
+        TSystemic,
+        TCurrent,
+        StripEmptyObjectsRecursively<DeleteProps<TDependencies, DependencyDestinationsOf<TNames>>>
+      >;
 };
 
 type InvalidDependencies<
@@ -112,10 +111,6 @@ type Injected<
   OptionSource<TSystemic[TMapping['component']], TCurrent, TMapping['source']>
 >;
 
-type DependencyDestinationOf<TMapping extends MappingDependsOnOption<any, any>> = TMapping['destination'] extends string
-  ? TMapping['destination']
-  : TMapping['component'];
-
 type OptionSource<
   TRegistration extends Registration<unknown, boolean>,
   TCurrent extends string,
@@ -124,8 +119,11 @@ type OptionSource<
 
 type DependencyValidationError<TName extends string, TExpected, TActual> = [TName, TExpected, TActual];
 
-export type IncompleteSystemic<TMissing extends string> = {
-  [X in keyof Systemic<any>]: (error: `Please add missing dependency ${TMissing}`) => void;
+export type IncompleteSystemic<TMissing> = {
+  [X in keyof Systemic<any>]: (
+    error: `Please add missing dependencies`,
+    expected: StripEmptyObjectsRecursively<DeepRequiredOnly<TMissing>>,
+  ) => void;
 };
 
 export type SystemicWithInvalidDependency<TError extends DependencyValidationError<any, any, any>> = {
@@ -142,7 +140,7 @@ export type SystemicBuild<
   TDependencies extends Record<string, unknown>,
 > = [RequiredKeys<TDependencies>] extends [never]
   ? Systemic<TSystemic> & DependsOn<TSystemic, TCurrent, TDependencies>
-  : DependsOn<TSystemic, TCurrent, TDependencies> & IncompleteSystemic<RequiredKeys<TDependencies>>;
+  : DependsOn<TSystemic, TCurrent, TDependencies> & IncompleteSystemic<TDependencies>;
 
 export type SystemicBuildDefaultComponent<
   TSystemic extends Record<string, Registration<unknown, boolean>>,
