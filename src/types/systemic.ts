@@ -1,7 +1,15 @@
 import type { ComponentTypeOf, DependenciesOf, IsComponent } from './component';
 import type { Definition, Registration } from './definition';
 import type { SystemOf } from './system';
-import type { DeepRequiredOnly, DeleteProps, EmptyObject, PropAt, RequiredKeys, StripEmptyObjectsRecursively } from './util';
+import type {
+  DeepRequiredOnly,
+  DeleteProps,
+  EmptyObject,
+  PropAt,
+  RequiredKeys,
+  SetNestedProp,
+  StripEmptyObjectsRecursively,
+} from './util';
 
 type DependencyDestinationOf<TOption> = TOption extends {
   component: infer Component;
@@ -179,11 +187,11 @@ type MergeIntoDefaultComponent<
       TSystemic,
       TCurrent,
       Rest,
-      {
-        [K in keyof TComponent | ToMappingDependsOnOption<First>['destination']]: K extends keyof TComponent
-          ? TComponent[K]
-          : Injected<TSystemic, TCurrent, ToMappingDependsOnOption<First>>;
-      }
+      SetNestedProp<
+        TComponent,
+        ToMappingDependsOnOption<First>['destination'],
+        Injected<TSystemic, TCurrent, ToMappingDependsOnOption<First>>
+      >
     >
   : TComponent;
 

@@ -207,5 +207,20 @@ describe('systemic types', () => {
     expectTypes<typeof system, Expected>().toBeEqual();
   });
 
-  it.skip('is a default component with a nested dependency');
+  it('is a systemic with a default component with a nested dependency', () => {
+    const system = mockSystemic()
+      .add('foo.bar', { start: async (deps: EmptyObject) => ({ baz: 42 }) })
+      .add('qux')
+      .dependsOn('foo.bar')
+      .add('baz', { start: async (deps: EmptyObject) => ({ qux: 42 }) });
+
+    type Registrations = {
+      'foo.bar': { component: { baz: number }; scoped: false };
+      qux: { component: { foo: { bar: { baz: number } } }; scoped: false };
+      baz: { component: { qux: number }; scoped: false };
+    };
+    type Expected = Systemic<Registrations> & DependsOn<Registrations, 'baz', EmptyObject>;
+
+    expectTypes<typeof system, Expected>().toBeEqual();
+  });
 });
