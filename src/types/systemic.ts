@@ -90,17 +90,17 @@ type ValidateMappingDependency<
   TCurrent extends keyof TSystemic & string,
   TDependencies extends Record<string, unknown>,
   TMapping extends { component: string; destination: string; source?: string },
-> = DependencyDestinationOf<TMapping> extends keyof TDependencies
-  ? [TDependencies[DependencyDestinationOf<TMapping>]] extends [Injected<TSystemic, TCurrent, TMapping>]
-    ? [] // Correct dependency
-    : [
-        DependencyValidationError<
-          DependencyDestinationOf<TMapping>,
-          TDependencies[DependencyDestinationOf<TMapping>],
-          Injected<TSystemic, TCurrent, TMapping>
-        >,
-      ] // Wrong type
-  : []; // Undexpected dependency
+> = [PropAt<TDependencies, DependencyDestinationOf<TMapping>>] extends [never]
+  ? [] // Unexpected dependency
+  : [PropAt<TDependencies, DependencyDestinationOf<TMapping>>] extends [Injected<TSystemic, TCurrent, TMapping>]
+  ? [] // Correct dependency
+  : [
+      DependencyValidationError<
+        DependencyDestinationOf<TMapping>,
+        PropAt<TDependencies, DependencyDestinationOf<TMapping>>,
+        Injected<TSystemic, TCurrent, TMapping>
+      >,
+    ]; // Wrong type
 
 type Injected<
   TSystemic extends Record<string, Registration<unknown, boolean>>,
