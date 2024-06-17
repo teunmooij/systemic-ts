@@ -18,3 +18,5 @@ type BuildSystem<TSystem extends unknown[], Acc extends Record<string, unknown> 
     ? BuildSystem<Rest, SetNestedProp<Acc, TName, TComponent>>
     : never
   : Acc;
+
+export type ComponentsOf<TSystem extends Record<string, Registration>> = { [K in keyof TSystem]: TSystem[K]['component'] };
