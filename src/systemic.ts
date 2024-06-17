@@ -206,6 +206,6 @@ function wrap<TComponent>(component: TComponent): Component<TComponent> {
   };
 }
 
-export function systemic(options?: { name?: string }) {
+export function systemic(options?: { name?: string }): Systemic<EmptyObject> {
   return new System<EmptyObject>(options);
 }
