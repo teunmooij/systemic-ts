@@ -1,9 +1,9 @@
 import initDebug from 'debug';
 
-import { randomName } from './util';
 import type {
   Component,
   ComponentTypeOf,
+  ComponentsOf,
   Definition,
   DependenciesOf,
   DependsOnOption,
@@ -14,6 +14,7 @@ import type {
   Systemic,
   SystemicBuild,
 } from './types';
+import { buildSystem, getDependencies, randomName, sortComponents } from './util';
 
 // TODO: function components
 // TODO: sync components
@@ -27,14 +28,16 @@ const defaultComponent = {
   },
 };
 
-export class System<TSystem extends Record<string, Registration> = EmptyObject> implements Systemic<TSystem> {
+class System<TSystem extends Record<string, Registration> = EmptyObject> implements Systemic<TSystem> {
   public readonly name: string;
 
   private definitions = new Map<string, Definition>();
   private currentDefinition: Definition | null = null;
 
+  private activeComponents: Record<string, unknown> = {};
+
   constructor(options?: { name?: string }) {
-    this.name = options?.name || randomName();
+    this.name = options?.name ?? randomName();
   }
 
   public add: Systemic<TSystem>['add'] = <S extends string, TComponent = unknown, Scoped extends boolean = false>(
@@ -140,13 +143,47 @@ export class System<TSystem extends Record<string, Registration> = EmptyObject> 
     return this as any;
   }
 
-  public start(): Promise<SystemOf<TSystem>> {
+  public async start(): Promise<SystemOf<TSystem>> {
     debug(`Starting system ${this.name}`);
-    throw new Error('Method not implemented.');
+
+    const sortedComponentNames = sortComponents(this.definitions, true);
+    for (const name of sortedComponentNames) {
+      if (name in this.activeComponents) {
+        continue;
+      }
+
+      debug(`Starting component ${name}`);
+      const definition = this.definitions.get(name)!;
+      const dependencies = getDependencies(name, this.definitions, this.activeComponents);
+      const component = await definition.component.start(dependencies);
+      this.activeComponents[name] = component;
+      debug(`Component ${name} started`);
+    }
+
+    debug(`Building system ${this.name}`);
+    const system = buildSystem(this.activeComponents as ComponentsOf<TSystem>);
+
+    debug(`System ${this.name} started`);
+    return system;
   }
 
-  public stop(): Promise<void> {
-    throw new Error('Method not implemented.');
+  public async stop(): Promise<void> {
+    debug(`Stopping system ${this.name}`);
+
+    const sortedComponentNames = sortComponents(this.definitions, false);
+    for (const name of sortedComponentNames) {
+      if (!(name in this.activeComponents)) {
+        continue;
+      }
+
+      debug(`Stopping component ${name}`);
+      const component = this.definitions.get(name)?.component;
+      if (component?.stop) {
+        await component.stop();
+      }
+      delete this.activeComponents[name];
+      debug(`Component ${name} stopped`);
+    }
   }
 
   public async restart(): Promise<SystemOf<TSystem>> {
@@ -167,4 +204,8 @@ function wrap<TComponent>(component: TComponent): Component<TComponent> {
   return {
     start: async () => component,
   };
+}
+
+export function systemic(options?: { name?: string }) {
+  return new System<EmptyObject>(options);
 }

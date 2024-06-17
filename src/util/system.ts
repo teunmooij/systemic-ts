@@ -1,6 +1,6 @@
 import initDebug from 'debug';
 import { ComponentsOf, Definition, Registration, SystemOf } from '../types';
-import { getProperty, setProperty } from './property';
+import { getProperty, hasProperty, setProperty } from './property';
 
 const debug = initDebug('systemic:system');
 
@@ -11,15 +11,15 @@ export function buildSystem<TSystem extends Record<string, Registration>>(compon
   );
 }
 
-export function getDepdendencies(name: string, definitions: Map<string, Definition>, activeComponents: Record<string, unknown>) {
+export function getDependencies(name: string, definitions: Map<string, Definition>, activeComponents: Record<string, unknown>) {
   const dependencies = definitions.get(name)?.dependencies || [];
   return dependencies.reduce<Record<string, any>>((acc, { component: componentName, destination, source, optional }) => {
     const component = activeComponents[componentName];
     if (component) {
-      const propertyName = source || (definitions.get(componentName)?.scoped ? name : undefined);
-      const property = propertyName ? getProperty(component, propertyName) : component;
+      const sourceProperty = source || (definitions.get(componentName)?.scoped ? name : undefined);
+      const property = sourceProperty ? getProperty(component, sourceProperty) : component;
       setProperty(acc, destination, property);
-    } else {
+    } else if (!hasProperty(activeComponents, componentName)) {
       if (optional) {
         debug(`Component ${name} has an unsatisfied optional dependency on ${componentName}`);
       } else {
