@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { EmptyObject, Systemic } from '../../src/types';
 import { DependsOn, IncompleteSystemic, SystemicWithInvalidDependency } from '../../src/types/systemic';
-import { mockSystemic } from '../helpers/systemic-mock';
-import { expectTypes } from '../helpers/type-matchers';
+import { mockSystemic } from '../mocks/systemic-mock';
+import { expectTypes } from '../test-helpers/type-matchers';
 
 describe('systemic types', () => {
   it('is a systemic with a single component', () => {

@@ -5,7 +5,7 @@ import type {
   ToMappingDependsOnOption,
   ValidateDependencies,
 } from '../../src/types/dependencies';
-import { expectTypes } from '../helpers/type-matchers';
+import { expectTypes } from '../test-helpers/type-matchers';
 
 describe('dependencies types', () => {
   describe('DependencyDestinationsOf', () => {

@@ -1,4 +1,4 @@
-import { sortComponents } from '../../src/util/sort';
+import { sortComponents } from '../../src/util';
 import { Definition } from '../../src/types';
 
 const component = { start: async () => ({}) };

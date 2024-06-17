@@ -1,5 +1,5 @@
 import type { Registration, SystemOf } from '../../src/types';
-import { expectTypes } from '../helpers/type-matchers';
+import { expectTypes } from '../test-helpers/type-matchers';
 
 describe('system types', () => {
   it('is the type of the system defined by the given definition', () => {

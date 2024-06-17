@@ -9,7 +9,7 @@ import type {
   StripEmptyObjectsRecursively,
   UnionToTuple,
 } from '../../src/types/util';
-import { expectTypes } from '../helpers/type-matchers';
+import { expectTypes } from '../test-helpers/type-matchers';
 
 describe('util types', () => {
   it('EmptyObject is an empty object type', () => {

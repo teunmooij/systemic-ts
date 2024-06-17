@@ -1,5 +1,5 @@
 import { ComponentTypeOf, DependenciesOf, IsComponent } from '../../src/types';
-import { expectType, expectTypes } from '../helpers/type-matchers';
+import { expectType, expectTypes } from '../test-helpers/type-matchers';
 
 describe('component types', () => {
   it('is a component', () => {
