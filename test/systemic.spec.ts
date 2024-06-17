@@ -275,4 +275,25 @@ describe('systemic', () => {
 
     expect(bar.state.dependencies).toEqual({ baz: 'foo' });
   });
+
+  it.skip('adds a dependency with a specified destination to a default component', async () => {
+    // const foo = mockComponent('foo');
+    // const system = systemic().add('foo', foo).add('bar').dependsOn({ component: 'foo', destination: 'baz' });
+    // const components = await system.start();
+    // expect(components).toEqual({ foo: 'foo', bar: { baz: 'foo' } });
+  });
+
+  it('allows missing optional dependencies', async () => {
+    const foo = mockComponent('foo');
+    const bar = mockComponent<{ baz?: string }>('bar');
+    const system = systemic<{ baz: string }>()
+      .add('foo', foo)
+      .add('bar', bar)
+      .dependsOn('foo', { component: 'baz', optional: true });
+
+    const components = await system.start();
+
+    expect(components).toEqual({ foo: 'foo', bar: 'bar' });
+    expect(bar.state.dependencies).toEqual({ foo: 'foo' });
+  });
 });

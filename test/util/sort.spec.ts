@@ -31,4 +31,12 @@ describe('sort', () => {
     ]);
     expect(() => sortComponents(definitions, true)).toThrowError('Cyclic dependency, node was:"b"');
   });
+
+  it('sort only the components that are in the definitions', () => {
+    const definitions = new Map<string, Definition>([
+      ['a', { component, dependencies: [{ component: 'b', destination: 'b', optional: true }] }],
+    ]);
+    const sorted = sortComponents(definitions, true);
+    expect(sorted).toEqual(['a']);
+  });
 });
