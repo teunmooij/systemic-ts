@@ -297,7 +297,7 @@ describe('systemic', () => {
     // const bar = mockComponent<{ foo: string }>('bar');
     // const system = systemic().add('foo', foo).add('bar', bar).dependsOn({ component: 'foo', source: 'qux' });
     // await system.start();
-    // expect(bar.state.dependencies).toEqual({ qux: 'foo' });
+    // expect(bar.state.dependencies).toEqual({ foo: 'baz' });
   });
 
   it('allows missing optional dependencies', async () => {
