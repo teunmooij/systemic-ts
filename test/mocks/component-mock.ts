@@ -9,7 +9,7 @@ interface State {
 
 export function mockComponent<TDependencies extends Record<string, unknown> = EmptyObject>(
   name: string,
-): jest.Mocked<Component<string, TDependencies>> & { state: State } {
+): jest.Mocked<Required<Component<string, TDependencies>>> & { state: State } {
   const state: State = { numberOfStarts: 0, isActive: false, dependencies: undefined };
   return {
     start: jest.fn().mockImplementation((dependencies: any) => {

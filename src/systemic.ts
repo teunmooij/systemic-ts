@@ -1,6 +1,7 @@
 import initDebug from 'debug';
 
 import type {
+  AsRegistrations,
   Component,
   ComponentTypeOf,
   ComponentsOf,
@@ -19,6 +20,7 @@ import { buildSystem, getDependencies, randomName, sortComponents } from './util
 // TODO: function components
 // TODO: sync components
 // TODO: parallel component starting/stopping
+// TODO: allow include from legacy systemic (or migrate)
 
 const debug = initDebug('systemic:index');
 
@@ -48,7 +50,7 @@ class System<TSystem extends Record<string, Registration> = EmptyObject> impleme
     debug(`Adding component ${name} to system ${this.name}`);
 
     if (this.definitions.has(name)) {
-      throw new Error(`Duplicate component: ${name}`);
+      throw new Error(`Component "${name}" is already registered`);
     }
 
     if (!component) {
@@ -112,14 +114,24 @@ class System<TSystem extends Record<string, Registration> = EmptyObject> impleme
 
   public merge<TSubSystem extends Record<string, Registration<unknown, boolean>>>(
     subSystem: Systemic<TSubSystem>,
+    { override = false } = { override: false },
   ): Systemic<TSystem & TSubSystem> {
-    return this.include(subSystem);
+    return this.include(subSystem, { override });
   }
 
   public include<TSubSystem extends Record<string, Registration<unknown, boolean>>>(
     subSystem: Systemic<TSubSystem>,
+    { override = false } = { override: false },
   ): Systemic<TSystem & TSubSystem> {
     debug(`Including definitions from sub system ${subSystem.name} into system ${this.name}`);
+
+    if (!override) {
+      for (const name of subSystem._definitions.keys()) {
+        if (this.definitions.has(name)) {
+          throw new Error(`Component "${name}" is already registered`);
+        }
+      }
+    }
 
     for (const [name, definition] of subSystem._definitions.entries()) {
       this.definitions.set(name, definition);
@@ -206,6 +218,12 @@ function wrap<TComponent>(component: TComponent): Component<TComponent> {
   };
 }
 
-export function systemic(options?: { name?: string }): Systemic<EmptyObject> {
-  return new System<EmptyObject>(options);
+/**
+ * Creates a system to which components for dependency injection can be added
+ * @returns An empty systemic system
+ */
+export function systemic<TMaster extends Record<string, unknown> = EmptyObject>(options?: {
+  name?: string;
+}): Systemic<AsRegistrations<TMaster>> {
+  return new System<AsRegistrations<TMaster>>(options);
 }

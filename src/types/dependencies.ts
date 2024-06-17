@@ -67,7 +67,9 @@ type ValidateMappingDependency<
   TMapping extends { component: string; destination: string; source?: string },
 > = [PropAt<TDependencies, DependencyDestinationOf<TMapping>>] extends [never]
   ? [] // Unexpected dependency
-  : [PropAt<TDependencies, DependencyDestinationOf<TMapping>>] extends [Injected<TSystemic, TCurrent, TMapping>]
+  : [PropAt<TDependencies, DependencyDestinationOf<TMapping>> | undefined] extends [
+      Injected<TSystemic, TCurrent, TMapping> | undefined,
+    ]
   ? [] // Correct dependency
   : [
       DependencyValidationError<

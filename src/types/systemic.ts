@@ -101,12 +101,18 @@ export interface Systemic<TSystem extends Record<string, Registration>> {
   /**
    * Includes a subsystem into this systemic system
    */
-  merge<TSubSystem extends Record<string, Registration>>(subSystem: Systemic<TSubSystem>): Systemic<TSystem & TSubSystem>;
+  merge<TSubSystem extends Record<string, Registration>>(
+    subSystem: Systemic<TSubSystem>,
+    options?: { override?: boolean },
+  ): Systemic<TSystem & TSubSystem>;
 
   /**
    * Includes a subsystem into this systemic system
    */
-  include<TSubSystem extends Record<string, Registration>>(subSystem: Systemic<TSubSystem>): Systemic<TSystem & TSubSystem>;
+  include<TSubSystem extends Record<string, Registration>>(
+    subSystem: Systemic<TSubSystem>,
+    options?: { override?: boolean },
+  ): Systemic<TSystem & TSubSystem>;
 
   /**
    * Starts the system and all of its components

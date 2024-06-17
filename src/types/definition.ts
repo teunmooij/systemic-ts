@@ -15,3 +15,7 @@ export interface Registration<Component = unknown, Scoped extends boolean = bool
   component: Component;
   scoped: Scoped;
 }
+
+export type AsRegistrations<TComponents extends Record<string, unknown>> = {
+  [K in keyof TComponents]: TComponents[K] extends Registration<any, any> ? TComponents[K] : Registration<TComponents[K], false>;
+};
