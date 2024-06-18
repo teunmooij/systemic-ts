@@ -23,6 +23,15 @@ describe('systemic types', () => {
     expectTypes<typeof system, Expected>().toBeEqual();
   });
 
+  it('is a systemic with a single synchronous component', () => {
+    const system = mockSystemic().add('foo', { start: (deps: EmptyObject) => ({ foo: 'bar' }) });
+
+    type Registrations = { foo: { component: { foo: string }; scoped: false } };
+    type Expected = Systemic<Registrations> & DependsOn<Registrations, 'foo', EmptyObject>;
+
+    expectTypes<typeof system, Expected>().toBeEqual();
+  });
+
   it('is a systemic with multiple components', () => {
     const system = mockSystemic()
       .add('foo', { start: async (deps: EmptyObject) => ({ foo: 'bar' }) })

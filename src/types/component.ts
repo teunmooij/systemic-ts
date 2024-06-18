@@ -11,11 +11,11 @@ export type Component<TComponent, TDependencies extends Record<string, unknown> 
    * @param {TDependencies} dependencies The dependencies of this component
    * @returns A started component
    */
-  start: (dependencies: TDependencies) => Promise<TComponent>;
+  start: (dependencies: TDependencies) => Promise<TComponent> | TComponent;
   /**
    * Stops this component
    */
-  stop?: () => Promise<void>;
+  stop?: () => Promise<void> | void;
 };
 
 /**

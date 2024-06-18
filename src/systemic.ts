@@ -18,7 +18,6 @@ import type {
 import { buildSystem, getDependencies, randomName, sortComponents } from './util';
 
 // TODO: function components
-// TODO: sync components
 // TODO: parallel component starting/stopping
 // TODO: allow include from legacy systemic (or migrate)
 // TODO: alternative `dependsOn` that doesn't require `as const`

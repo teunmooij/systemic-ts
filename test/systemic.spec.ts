@@ -85,6 +85,15 @@ describe('systemic', () => {
     expect(components).toEqual({ foo });
   });
 
+  it('includes synchronous components', async () => {
+    const foo = { start: () => ({ bar: 42 }) };
+    const system = systemic().add('foo', foo);
+
+    const components = await system.start();
+
+    expect(components).toEqual({ foo: { bar: 42 } });
+  });
+
   it('starts multiple components with dependencies', async () => {
     const foo = mockComponent('foo');
     const bar = mockComponent('bar');
