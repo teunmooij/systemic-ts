@@ -32,14 +32,29 @@ describe('systemic types', () => {
     expectTypes<typeof system, Expected>().toBeEqual();
   });
 
+  it('is a systemic with a single function component', () => {
+    const system = mockSystemic().add('foo', () => ({ foo: 'bar' }));
+
+    type Registrations = { foo: { component: { foo: string }; scoped: false } };
+    type Expected = Systemic<Registrations> & DependsOn<Registrations, 'foo', EmptyObject>;
+
+    expectTypes<typeof system, Expected>().toBeEqual();
+  });
+
   it('is a systemic with multiple components', () => {
     const system = mockSystemic()
-      .add('foo', { start: async (deps: EmptyObject) => ({ foo: 'bar' }) })
+      .add('foo', { start: (deps: EmptyObject) => ({ foo: 'bar' }) })
       .add('bar', { start: async (deps: { foo: { foo: 'bar' } }) => 42 })
-      .dependsOn('foo');
+      .dependsOn('foo')
+      .add('baz', (dep: { bar: number }) => ({ baz: dep.bar }))
+      .dependsOn('bar');
 
-    type Registrations = { foo: { component: { foo: string }; scoped: false }; bar: { component: number; scoped: false } };
-    type Expected = Systemic<Registrations> & DependsOn<Registrations, 'bar', EmptyObject>;
+    type Registrations = {
+      foo: { component: { foo: string }; scoped: false };
+      bar: { component: number; scoped: false };
+      'baz': { component: { baz: number }; scoped: false };
+    };
+    type Expected = Systemic<Registrations> & DependsOn<Registrations, 'baz', EmptyObject>;
 
     expectTypes<typeof system, Expected>().toBeEqual();
   });

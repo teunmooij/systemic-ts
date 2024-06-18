@@ -12,6 +12,11 @@ describe('component types', () => {
     expectType<IsComponent<typeof component>>().toBeTrue();
   });
 
+  it('is a function component', () => {
+    const component = () => ({});
+    expectType<IsComponent<typeof component>>().toBeTrue();
+  });
+
   it('is not a component', () => {
     const component = {};
     expectType<IsComponent<typeof component> | false>().toBeFalse();

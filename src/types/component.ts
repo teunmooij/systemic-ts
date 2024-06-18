@@ -36,6 +36,15 @@ export type CallbackComponent<TComponent, TDependencies extends Record<string, u
   stop?: (callback: (err?: any) => void) => void;
 };
 
-export type IsComponent<T> = T extends Component<any, any> ? true : false;
-export type ComponentTypeOf<T> = T extends Component<infer C, any> ? C : never;
-export type DependenciesOf<T> = T extends Component<any, infer D> ? D : EmptyObject;
+export type FunctionComponent<TComponent, TDependencies extends Record<string, unknown>> = (
+  dependencies: TDependencies,
+) => Promise<TComponent> | TComponent;
+
+export type IsComponent<T> = T extends Component<any, any> ? true : T extends FunctionComponent<any, any> ? true : false;
+export type ComponentTypeOf<T> = T extends Component<infer C, any> ? C : T extends FunctionComponent<infer C, any> ? C : never;
+export type DependenciesOf<T> = T extends Component<any, infer D>
+  ? D
+  : T extends FunctionComponent<any, infer D>
+  ? D
+  : EmptyObject;
+

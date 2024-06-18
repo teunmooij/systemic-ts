@@ -16,11 +16,7 @@ import type {
   SystemicBuild,
 } from './types';
 import { buildSystem, getDependencies, randomName, sortComponents } from './util';
-
-// TODO: function components
-// TODO: parallel component starting/stopping
-// TODO: allow include from legacy systemic (or migrate)
-// TODO: alternative `dependsOn` that doesn't require `as const`
+import { FunctionComponent } from './types/component';
 
 const debug = initDebug('systemic:index');
 
@@ -83,6 +79,8 @@ class System<TSystem extends Record<string, Registration> = EmptyObject> impleme
   private _set(name: string, component: unknown, scoped = false) {
     const definition = isComponent(component)
       ? { component, dependencies: [], scoped }
+      : isFunctionComponent(component)
+      ? { component: wrapFC(component), dependencies: [], scoped }
       : { component: wrap(component), dependencies: [], scoped };
 
     this.definitions.set(name, definition);
@@ -212,10 +210,22 @@ function isComponent(component: any): component is { start: any } {
   return 'start' in component;
 }
 
+function isFunctionComponent(component: any): component is FunctionComponent<any, any> {
+  return typeof component === 'function';
+}
+
 function wrap<TComponent>(component: TComponent): Component<TComponent> {
   return {
     start: async () => component,
   };
+}
+
+function wrapFC<TComponent extends FunctionComponent<any, any>>(
+  component: TComponent,
+): TComponent extends FunctionComponent<infer C, infer D> ? Component<C, D> : never {
+  return {
+    start: component,
+  } as any;
 }
 
 /**
