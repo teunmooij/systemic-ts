@@ -1,16 +1,16 @@
-# [module-name]
+# systemic-ts
 
-Short description of the module
+A minimal type-safe dependency injection library, based on and compatible with [systemic](https://github.com/onebeyond/systemic#readme).
 
 ## Installation
 
 ```shell
-$ npm install <module-name>
+$ npm install systemic-ts
 ```
 
 ## Usage
 
-Explanation of how the module can be used
+
 
 ## Version history
 
