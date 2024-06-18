@@ -21,6 +21,7 @@ import { buildSystem, getDependencies, randomName, sortComponents } from './util
 // TODO: sync components
 // TODO: parallel component starting/stopping
 // TODO: allow include from legacy systemic (or migrate)
+// TODO: alternative `dependsOn` that doesn't require `as const`
 
 const debug = initDebug('systemic:index');
 
@@ -140,7 +141,7 @@ class System<TSystem extends Record<string, Registration> = EmptyObject> impleme
     return this as any;
   }
 
-  public dependsOn<TNames extends DependsOnOption<any, any>[]>(...dependencies: TNames) {
+  public dependsOn<TNames extends DependsOnOption<any>[]>(...dependencies: TNames) {
     if (!this.currentDefinition) {
       throw new Error('You must add a component before calling dependsOn');
     }

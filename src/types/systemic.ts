@@ -142,7 +142,7 @@ export type DependsOn<
    * When name and type of the dependencies match those available in the system, the dependency can be added by name.
    * When a dependency is named differently in the system or only part of a component is required as a dependency, a MappingDependsOnOption can be used.
    */
-  dependsOn: <TNames extends DependsOnOption<TDependencies, TSystemic>[]>(
+  dependsOn: <TNames extends DependsOnOption<Omit<TSystemic, TCurrent>>[]>(
     ...names: TNames
   ) => ValidateDependencies<TSystemic, TCurrent, TDependencies, TNames> extends [
     infer First extends DependencyValidationError<any, any, any>,
@@ -188,7 +188,7 @@ type SystemicBuildDefaultComponent<
    * When name and type of the dependencies match those available in the system, the dependency can be added by name.
    * When a dependency is named differently in the system or only part of a component is required as a dependency, a MappingDependsOnOption can be used.
    */
-  dependsOn: <TNames extends DependsOnOption<EmptyObject, TSystemic>[]>(
+  dependsOn: <TNames extends DependsOnOption<Omit<TSystemic, TCurrent>>[]>(
     ...names: TNames
   ) => SystemicBuildDefaultComponent<
     {
@@ -206,12 +206,9 @@ type SystemicBuildDefaultComponent<
 type MergeIntoDefaultComponent<
   TSystemic extends Record<string, Registration<unknown, boolean>>,
   TCurrent extends keyof TSystemic & string,
-  TNames extends DependsOnOption<EmptyObject, TSystemic>[],
+  TNames extends DependsOnOption<TSystemic>[],
   TComponent,
-> = TNames extends [
-  infer First extends DependsOnOption<EmptyObject, TSystemic>,
-  ...infer Rest extends DependsOnOption<EmptyObject, TSystemic>[],
-]
+> = TNames extends [infer First extends DependsOnOption<TSystemic>, ...infer Rest extends DependsOnOption<TSystemic>[]]
   ? MergeIntoDefaultComponent<
       TSystemic,
       TCurrent,

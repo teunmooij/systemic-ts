@@ -270,34 +270,46 @@ describe('systemic', () => {
   it('adds a dependency with a specified destination', async () => {
     const foo = mockComponent('foo');
     const bar = mockComponent<{ baz: string }>('bar');
-    const system = systemic().add('foo', foo).add('bar', bar).dependsOn({ component: 'foo', destination: 'baz' });
+    const system = systemic()
+      .add('foo', foo)
+      .add('bar', bar)
+      .dependsOn({ component: 'foo', destination: 'baz' } as const);
 
     await system.start();
 
     expect(bar.state.dependencies).toEqual({ baz: 'foo' });
   });
 
-  it.skip('adds a dependency with an unexpected specified destination', async () => {
-    // const foo = mockComponent('foo');
-    // const bar = mockComponent<EmptyObject>('bar');
-    // const system = systemic().add('foo', foo).add('bar', bar).dependsOn({ component: 'foo', destination: 'baz' });
-    // await system.start();
-    // expect(bar.state.dependencies).toEqual({ baz: 'foo' });
+  it('adds a dependency with an unexpected specified destination', async () => {
+    const foo = mockComponent('foo');
+    const bar = mockComponent<EmptyObject>('bar');
+    const system = systemic()
+      .add('foo', foo)
+      .add('bar', bar)
+      .dependsOn({ component: 'foo', destination: 'baz' } as const);
+    await system.start();
+    expect(bar.state.dependencies).toEqual({ baz: 'foo' });
   });
 
-  it.skip('adds a dependency with a specified destination to a default component', async () => {
-    // const foo = mockComponent('foo');
-    // const system = systemic().add('foo', foo).add('bar').dependsOn({ component: 'foo', destination: 'baz' });
-    // const components = await system.start();
-    // expect(components).toEqual({ foo: 'foo', bar: { baz: 'foo' } });
+  it('adds a dependency with a specified destination to a default component', async () => {
+    const foo = mockComponent('foo');
+    const system = systemic()
+      .add('foo', foo)
+      .add('bar')
+      .dependsOn({ component: 'foo', destination: 'baz' } as const);
+    const components = await system.start();
+    expect(components).toEqual({ foo: 'foo', bar: { baz: 'foo' } });
   });
 
-  it.skip('adds a dependency with a specified source', async () => {
-    // const foo = { qux: 'baz' };
-    // const bar = mockComponent<{ foo: string }>('bar');
-    // const system = systemic().add('foo', foo).add('bar', bar).dependsOn({ component: 'foo', source: 'qux' });
-    // await system.start();
-    // expect(bar.state.dependencies).toEqual({ foo: 'baz' });
+  it('adds a dependency with a specified source', async () => {
+    const foo = { qux: 'baz' };
+    const bar = mockComponent<{ foo: string }>('bar');
+    const system = systemic()
+      .add('foo', foo)
+      .add('bar', bar)
+      .dependsOn({ component: 'foo', source: 'qux' } as const);
+    await system.start();
+    expect(bar.state.dependencies).toEqual({ foo: 'baz' });
   });
 
   it('allows missing optional dependencies', async () => {

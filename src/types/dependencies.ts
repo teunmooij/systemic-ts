@@ -2,23 +2,14 @@ import type { Registration } from './definition';
 import type { PropAt } from './util';
 
 type SimpleDependsOnOption<TSystemic> = keyof TSystemic & string;
-type MappingDependsOnOption<TDependencyKeys, TSystemic> = TDependencyKeys extends keyof TSystemic
-  ? {
-      component: keyof TSystemic & string;
-      destination?: TDependencyKeys & string;
-      optional?: boolean;
-      source?: string;
-    }
-  : {
-      component: keyof TSystemic & string;
-      destination: TDependencyKeys & string;
-      optional?: boolean;
-      source?: string;
-    };
+interface MappingDependsOnOption<TSystemic> {
+  component: keyof TSystemic & string;
+  destination?: string;
+  optional?: boolean;
+  source?: string;
+}
 
-export type DependsOnOption<TDependencies, TSystemic> =
-  | SimpleDependsOnOption<TSystemic>
-  | MappingDependsOnOption<keyof TDependencies, TSystemic>;
+export type DependsOnOption<TSystemic> = SimpleDependsOnOption<TSystemic> | MappingDependsOnOption<TSystemic>;
 
 type DependencyDestinationOf<TOption> = TOption extends {
   component: infer Component;
@@ -35,13 +26,13 @@ export type DependencyDestinationsOf<TOptions> = TOptions extends [infer First, 
   ? [DependencyDestinationOf<First>, ...DependencyDestinationsOf<Rest>]
   : [];
 
-export type ToMappingDependsOnOption<TOption extends DependsOnOption<any, any>> = TOption extends SimpleDependsOnOption<any>
+export type ToMappingDependsOnOption<TOption extends DependsOnOption<any>> = TOption extends SimpleDependsOnOption<any>
   ? { component: TOption; destination: TOption }
-  : TOption extends MappingDependsOnOption<any, any>
+  : TOption extends MappingDependsOnOption<any>
   ? OptionWithDestination<TOption>
   : never; // Impossible situation
 
-type OptionWithDestination<TOption extends MappingDependsOnOption<any, any>> = Omit<TOption, 'destination'> & {
+type OptionWithDestination<TOption extends MappingDependsOnOption<any>> = Omit<TOption, 'destination'> & {
   destination: DependencyDestinationOf<TOption>;
 };
 
@@ -49,11 +40,8 @@ export type ValidateDependencies<
   TSystemic extends Record<string, Registration<unknown, boolean>>,
   TCurrent extends keyof TSystemic & string,
   TDependencies extends Record<string, unknown>,
-  TGiven extends DependsOnOption<TDependencies, TSystemic>[],
-> = TGiven extends [
-  infer First extends DependsOnOption<TDependencies, TSystemic>,
-  ...infer Rest extends DependsOnOption<TDependencies, TSystemic>[],
-]
+  TGiven extends DependsOnOption<TSystemic>[],
+> = TGiven extends [infer First extends DependsOnOption<TSystemic>, ...infer Rest extends DependsOnOption<TSystemic>[]]
   ? [
       ...ValidateMappingDependency<TSystemic, TCurrent, TDependencies, ToMappingDependsOnOption<First>>,
       ...ValidateDependencies<TSystemic, TCurrent, TDependencies, Rest>,

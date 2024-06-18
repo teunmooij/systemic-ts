@@ -228,7 +228,7 @@ describe('systemic types', () => {
     const system = mockSystemic()
       .add('foo.bar', { start: async (deps: EmptyObject) => ({ baz: 42 }) })
       .add('qux', { start: async (deps: { baz: { baz: number } }) => 42 })
-      .dependsOn({ component: 'foo.bar', destination: 'baz' });
+      .dependsOn({ component: 'foo.bar', destination: 'baz' } as const);
 
     type Registrations = {
       'foo.bar': { component: { baz: number }; scoped: false };
