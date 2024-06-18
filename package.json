@@ -13,6 +13,7 @@
     "prepare": "husky install"
   },
   "devDependencies": {
+    "@types/debug": "^4.1.12",
     "@types/jest": "^29.2.4",
     "@typescript-eslint/eslint-plugin": "^5.30.3",
     "@typescript-eslint/parser": "^5.30.3",
@@ -46,5 +47,10 @@
   "bugs": {
     "url": "https://github.com/teunmooij/typescript-module-template/issues"
   },
-  "homepage": "https://github.com/teunmooij/typescript-module-template#readme"
+  "homepage": "https://github.com/teunmooij/typescript-module-template#readme",
+  "dependencies": {
+    "@types/toposort": "^2.0.7",
+    "debug": "^4.3.5",
+    "toposort": "^2.0.2"
+  }
 }

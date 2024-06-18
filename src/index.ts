@@ -1,3 +1,4 @@
-export const greet = (name: string, logger: { log: (text: string) => void } = console) => {
-  logger.log(`Hello ${name}!`);
-};
+export { asCallbackSystem, promisifyComponent } from './promisify';
+export { systemic } from './systemic';
+
+export type { Systemic, Component } from './types';
