@@ -1,4 +1,4 @@
-export { asCallbackSystem, promisifyComponent } from './promisify';
-export { systemic } from './systemic';
+export { asCallbackSystem, promisifyComponent } from "./promisify";
+export { systemic } from "./systemic";
 
-export type { Systemic, Component } from './types';
+export type { Systemic, Component } from "./types";

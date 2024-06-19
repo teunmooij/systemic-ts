@@ -1,5 +1,6 @@
-import type { Component } from '../../src';
-import { EmptyObject } from '../../src/types';
+import { type Mocked, vi } from "vitest";
+import type { Component } from "../../src";
+import type { EmptyObject } from "../../src/types";
 
 interface State {
   numberOfStarts: number;
@@ -9,16 +10,16 @@ interface State {
 
 export function mockComponent<TDependencies extends Record<string, unknown> = EmptyObject>(
   name: string,
-): jest.Mocked<Required<Component<string, TDependencies>>> & { state: State } {
+): Mocked<Required<Component<string, TDependencies>>> & { state: State } {
   const state: State = { numberOfStarts: 0, isActive: false, dependencies: undefined };
   return {
-    start: jest.fn().mockImplementation((dependencies: any) => {
+    start: vi.fn().mockImplementation((dependencies: any) => {
       state.numberOfStarts++;
       state.isActive = true;
       state.dependencies = dependencies;
       return name;
     }),
-    stop: jest.fn().mockImplementation(() => {
+    stop: vi.fn().mockImplementation(() => {
       state.isActive = false;
     }),
     state,

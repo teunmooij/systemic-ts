@@ -1,14 +1,14 @@
-import type { ComponentTypeOf, DependenciesOf, IsComponent } from './component';
-import type { Definition, Registration } from './definition';
-import {
+import type { ComponentTypeOf, DependenciesOf, IsComponent } from "./component";
+import type { Definition, Registration } from "./definition";
+import type {
   DependencyDestinationsOf,
   DependencyValidationError,
   DependsOnOption,
   Injected,
   ValidateDependencies,
   ToMappingDependsOnOption,
-} from './dependencies';
-import type { SystemOf } from './system';
+} from "./dependencies";
+import type { SystemOf } from "./system";
 import type {
   DeepRequiredOnly,
   DeleteProps,
@@ -16,7 +16,7 @@ import type {
   RequiredKeys,
   SetNestedProp,
   StripEmptyObjectsRecursively,
-} from './util';
+} from "./util";
 
 /**
  * Systemic system.
@@ -42,8 +42,8 @@ export interface Systemic<TSystem extends Record<string, Registration>> {
       [G in keyof TSystem | S]: G extends keyof TSystem
         ? TSystem[G]
         : IsComponent<TComponent> extends true
-        ? { component: ComponentTypeOf<TComponent>; scoped: Scoped }
-        : { component: TComponent; scoped: Scoped };
+          ? { component: ComponentTypeOf<TComponent>; scoped: Scoped }
+          : { component: TComponent; scoped: Scoped };
     },
     S,
     DependenciesOf<TComponent>
@@ -52,7 +52,9 @@ export interface Systemic<TSystem extends Record<string, Registration>> {
     name: S extends keyof TSystem ? never : S, // We don't allow duplicate names,
   ): SystemicBuildDefaultComponent<
     {
-      [G in keyof TSystem | S]: G extends keyof TSystem ? TSystem[G] : { component: EmptyObject; scoped: false };
+      [G in keyof TSystem | S]: G extends keyof TSystem
+        ? TSystem[G]
+        : { component: EmptyObject; scoped: false };
     },
     S
   >;
@@ -88,7 +90,7 @@ export interface Systemic<TSystem extends Record<string, Registration>> {
         ? { component: ComponentTypeOf<TComponent>; scoped: true }
         : { component: TComponent; scoped: true };
     },
-    'config',
+    "config",
     DependenciesOf<TComponent>
   >;
 
@@ -163,13 +165,14 @@ export type IncompleteSystemic<TMissing> = {
   ) => void;
 };
 
-export type SystemicWithInvalidDependency<TError extends DependencyValidationError<any, any, any>> = {
-  [X in keyof Systemic<any>]: (
-    error: `Componenent "${TError[0]}" in the system is not of the required type`,
-    expected: TError[1],
-    actual: TError[2],
-  ) => void;
-};
+export type SystemicWithInvalidDependency<TError extends DependencyValidationError<any, any, any>> =
+  {
+    [X in keyof Systemic<any>]: (
+      error: `Componenent "${TError[0]}" in the system is not of the required type`,
+      expected: TError[1],
+      actual: TError[2],
+    ) => void;
+  };
 
 export type SystemicBuild<
   TSystemic extends Record<string, Registration<unknown, boolean>>,
@@ -194,7 +197,12 @@ type SystemicBuildDefaultComponent<
     {
       [G in keyof TSystemic]: G extends TCurrent
         ? {
-            component: MergeIntoDefaultComponent<TSystemic, TCurrent, TNames, TSystemic[TCurrent]['component']>;
+            component: MergeIntoDefaultComponent<
+              TSystemic,
+              TCurrent,
+              TNames,
+              TSystemic[TCurrent]["component"]
+            >;
             scoped: false;
           }
         : TSystemic[G];
@@ -208,14 +216,17 @@ type MergeIntoDefaultComponent<
   TCurrent extends keyof TSystemic & string,
   TNames extends DependsOnOption<TSystemic>[],
   TComponent,
-> = TNames extends [infer First extends DependsOnOption<TSystemic>, ...infer Rest extends DependsOnOption<TSystemic>[]]
+> = TNames extends [
+  infer First extends DependsOnOption<TSystemic>,
+  ...infer Rest extends DependsOnOption<TSystemic>[],
+]
   ? MergeIntoDefaultComponent<
       TSystemic,
       TCurrent,
       Rest,
       SetNestedProp<
         TComponent,
-        ToMappingDependsOnOption<First>['destination'],
+        ToMappingDependsOnOption<First>["destination"],
         Injected<TSystemic, TCurrent, ToMappingDependsOnOption<First>>
       >
     >

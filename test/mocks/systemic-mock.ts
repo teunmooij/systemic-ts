@@ -1,4 +1,4 @@
-import type { Definition, EmptyObject, Systemic } from '../../src/types';
+import type { Definition, EmptyObject, Systemic } from "../../src/types";
 
 /**
  * Creates a mock systemic instance, whithout any functionality. It can be used to test the types of the Systemic interface.
@@ -6,7 +6,7 @@ import type { Definition, EmptyObject, Systemic } from '../../src/types';
  */
 export function mockSystemic(): Systemic<EmptyObject> {
   return {
-    name: 'mock-system',
+    name: "mock-system",
     add() {
       return this;
     },

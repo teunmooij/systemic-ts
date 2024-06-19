@@ -1,3 +1,5 @@
+import { describe, it, expect } from "vitest";
+
 import type {
   DeepRequiredOnly,
   DeleteProp,
@@ -8,18 +10,18 @@ import type {
   SetNestedProp,
   StripEmptyObjectsRecursively,
   UnionToTuple,
-} from '../../src/types/util';
-import { expectTypes } from '../test-helpers/type-matchers';
+} from "../../src/types/util";
+import { expectTypes } from "../test-helpers/type-matchers";
 
-describe('util types', () => {
-  it('EmptyObject is an empty object type', () => {
+describe("util types", () => {
+  it("EmptyObject is an empty object type", () => {
     type Result = EmptyObject;
 
-    // eslint-disable-next-line @typescript-eslint/ban-types
+    // biome-ignore lint/complexity/noBannedTypes: no issue here
     expectTypes<Result, {}>().toBeEqual();
   });
 
-  it('is the set of keys that are required in a given object', () => {
+  it("is the set of keys that are required in a given object", () => {
     type Test = {
       a?: string;
       b: string;
@@ -28,10 +30,10 @@ describe('util types', () => {
 
     type Result = RequiredKeys<Test>;
 
-    expectTypes<Result, 'b' | 'c'>().toBeEqual();
+    expectTypes<Result, "b" | "c">().toBeEqual();
   });
 
-  it('is a deep required version of the given object', () => {
+  it("is a deep required version of the given object", () => {
     type Test = {
       a?: string;
       b: string;
@@ -43,16 +45,16 @@ describe('util types', () => {
     expectTypes<Result, { b: string; c: EmptyObject }>().toBeEqual();
   });
 
-  it('is a tuple of the given union', () => {
-    type Test = 'a' | 'b' | 'c';
+  it("is a tuple of the given union", () => {
+    type Test = "a" | "b" | "c";
 
     type Result = UnionToTuple<Test>;
 
     // test might be unstable as the order of the tuple is not guaranteed
-    expectTypes<Result, ['a', 'b', 'c']>().toBeEqual();
+    expectTypes<Result, ["a", "b", "c"]>().toBeEqual();
   });
 
-  it('is a property at the given key', () => {
+  it("is a property at the given key", () => {
     type Source = {
       a: {
         b: {
@@ -63,15 +65,15 @@ describe('util types', () => {
     };
 
     expectTypes<PropAt<Source, undefined>, Source>().toBeEqual();
-    expectTypes<PropAt<Source, 'a'>, { b: { c: string } }>().toBeEqual();
-    expectTypes<PropAt<Source, 'a.b'>, { c: string }>().toBeEqual();
-    expectTypes<PropAt<Source, 'a.b.c'>, string>().toBeEqual();
-    expectTypes<PropAt<Source, 'd'>, number>().toBeEqual();
-    expectTypes<PropAt<Source, 'e'>, never>().toBeEqual();
-    expectTypes<PropAt<Source, 'a.b.c.d'>, never>().toBeEqual();
+    expectTypes<PropAt<Source, "a">, { b: { c: string } }>().toBeEqual();
+    expectTypes<PropAt<Source, "a.b">, { c: string }>().toBeEqual();
+    expectTypes<PropAt<Source, "a.b.c">, string>().toBeEqual();
+    expectTypes<PropAt<Source, "d">, number>().toBeEqual();
+    expectTypes<PropAt<Source, "e">, never>().toBeEqual();
+    expectTypes<PropAt<Source, "a.b.c.d">, never>().toBeEqual();
   });
 
-  it('sets a nested property at the given key', () => {
+  it("sets a nested property at the given key", () => {
     type Source = {
       a: {
         b: {
@@ -81,10 +83,10 @@ describe('util types', () => {
       d: number;
     };
 
-    type Result1 = SetNestedProp<Source, 'a.b.c', number>;
-    type Result2 = SetNestedProp<Source, 'a.b.d', number>;
-    type Result3 = SetNestedProp<Source, 'a.b', number>;
-    type Result4 = SetNestedProp<Source, 'a.b.c.d', number>;
+    type Result1 = SetNestedProp<Source, "a.b.c", number>;
+    type Result2 = SetNestedProp<Source, "a.b.d", number>;
+    type Result3 = SetNestedProp<Source, "a.b", number>;
+    type Result4 = SetNestedProp<Source, "a.b.c.d", number>;
 
     expectTypes<Result1, { a: { b: { c: number } }; d: number }>().toBeEqual();
     expectTypes<Result2, { a: { b: { c: string; d: number } }; d: number }>().toBeEqual();
@@ -92,7 +94,7 @@ describe('util types', () => {
     expectTypes<Result4, { a: { b: { c: { d: number } } }; d: number }>().toBeEqual();
   });
 
-  it('strips empty objects recursively', () => {
+  it("strips empty objects recursively", () => {
     type Source = {
       a: {
         b: {
@@ -110,7 +112,7 @@ describe('util types', () => {
     expectTypes<Result, { a: { b: { c: string } } }>().toBeEqual();
   });
 
-  it('deletes a property at the given key', () => {
+  it("deletes a property at the given key", () => {
     type Source = {
       a: {
         b: {
@@ -121,12 +123,12 @@ describe('util types', () => {
       e: number;
     };
 
-    type Result1 = DeleteProp<Source, 'a.b.c'>;
-    type Result2 = DeleteProp<Source, 'a.b'>;
-    type Result3 = DeleteProp<Source, 'a'>;
-    type Result4 = DeleteProp<Source, 'e'>;
-    type Result5 = DeleteProp<Source, 'f'>;
-    type Result6 = DeleteProp<Result1, 'a.b.d'>;
+    type Result1 = DeleteProp<Source, "a.b.c">;
+    type Result2 = DeleteProp<Source, "a.b">;
+    type Result3 = DeleteProp<Source, "a">;
+    type Result4 = DeleteProp<Source, "e">;
+    type Result5 = DeleteProp<Source, "f">;
+    type Result6 = DeleteProp<Result1, "a.b.d">;
 
     expectTypes<Result1, { a: { b: { d: string } }; e: number }>().toBeEqual();
     expectTypes<Result2, { a: EmptyObject; e: number }>().toBeEqual();
@@ -139,7 +141,7 @@ describe('util types', () => {
     expectTypes<StripEmptyObjectsRecursively<Result6>, { e: number }>().toBeEqual();
   });
 
-  it('deletes multiple properties at the given keys', () => {
+  it("deletes multiple properties at the given keys", () => {
     type Source = {
       a: {
         b: {
@@ -151,7 +153,7 @@ describe('util types', () => {
       f: string;
     };
 
-    type Result = DeleteProps<Source, ['a.b.c', 'e']>;
+    type Result = DeleteProps<Source, ["a.b.c", "e"]>;
 
     expectTypes<Result, { a: { b: { d: string } }; f: string }>().toBeEqual();
   });

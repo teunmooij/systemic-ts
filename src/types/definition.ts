@@ -1,4 +1,4 @@
-import type { Component } from './component';
+import type { Component } from "./component";
 
 export interface Definition {
   scoped?: boolean;
@@ -17,5 +17,7 @@ export interface Registration<Component = unknown, Scoped extends boolean = bool
 }
 
 export type AsRegistrations<TComponents extends Record<string, unknown>> = {
-  [K in keyof TComponents]: TComponents[K] extends Registration<any, any> ? TComponents[K] : Registration<TComponents[K], false>;
+  [K in keyof TComponents]: TComponents[K] extends Registration<any, any>
+    ? TComponents[K]
+    : Registration<TComponents[K], false>;
 };

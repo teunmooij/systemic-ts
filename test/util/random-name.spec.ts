@@ -1,7 +1,9 @@
-import { randomName } from '../../src/util/random-name';
+import { describe, it, expect } from "vitest";
 
-describe('randomName', () => {
-  it('returns a random name', () => {
+import { randomName } from "../../src/util/random-name";
+
+describe("randomName", () => {
+  it("returns a random name", () => {
     const name = randomName();
     expect(name).toMatch(/^Z-\d+$/);
   });

@@ -2,7 +2,6 @@ src/
 test/
 .husky/
 
-.eslintrc.js
-.prettierrc.js
-jest.config.test
+biome.json
 tsconfig.json
+vitest.config.mts

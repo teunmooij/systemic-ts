@@ -1,6 +1,6 @@
-import { Registration, SystemOf, Systemic } from './types';
-import type { CallbackComponent, Component } from './types/component';
-import { promisify } from 'node:util';
+import type { Registration, SystemOf, Systemic } from "./types";
+import type { CallbackComponent, Component } from "./types/component";
+import { promisify } from "node:util";
 
 /**
  * Turns a legacy callback-style component into a promise-style component.
@@ -21,7 +21,9 @@ export function promisifyComponent<TComponent, TDependencies extends Record<stri
  * @param system the systemic system
  * @returns a callback-style system
  */
-export function asCallbackSystem<TSystem extends Record<string, Registration>>(system: Systemic<TSystem>) {
+export function asCallbackSystem<TSystem extends Record<string, Registration>>(
+  system: Systemic<TSystem>,
+) {
   return {
     ...system,
     start: (callback: (error: Error | null, result?: SystemOf<TSystem>) => void) => {

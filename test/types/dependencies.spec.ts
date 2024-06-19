@@ -1,108 +1,113 @@
+import { describe, it, expect } from "vitest";
+
 import type {
   DependencyDestinationsOf,
   DependencyValidationError,
   Injected,
   ToMappingDependsOnOption,
   ValidateDependencies,
-} from '../../src/types/dependencies';
-import { expectTypes } from '../test-helpers/type-matchers';
+} from "../../src/types/dependencies";
+import { expectTypes } from "../test-helpers/type-matchers";
 
-describe('dependencies types', () => {
-  describe('DependencyDestinationsOf', () => {
-    it('is a dependency destination of a string dependency', () => {
-      type Dependencies = ['foo'];
-
-      type Result = DependencyDestinationsOf<Dependencies>;
-
-      expectTypes<Result, ['foo']>().toBeEqual();
-    });
-
-    it('is a dependency destination of a mapping dependency', () => {
-      type Dependencies = [{ component: 'foo'; destination: 'bar' }];
+describe("dependencies types", () => {
+  describe("DependencyDestinationsOf", () => {
+    it("is a dependency destination of a string dependency", () => {
+      type Dependencies = ["foo"];
 
       type Result = DependencyDestinationsOf<Dependencies>;
 
-      expectTypes<Result, ['bar']>().toBeEqual();
+      expectTypes<Result, ["foo"]>().toBeEqual();
     });
 
-    it('is a dependency destination of a mpaaing dependency without destination', () => {
-      type Dependencies = [{ component: 'foo' }];
+    it("is a dependency destination of a mapping dependency", () => {
+      type Dependencies = [{ component: "foo"; destination: "bar" }];
 
       type Result = DependencyDestinationsOf<Dependencies>;
 
-      expectTypes<Result, ['foo']>().toBeEqual();
+      expectTypes<Result, ["bar"]>().toBeEqual();
     });
 
-    it('is a dependency destination of multiple dependencies', () => {
+    it("is a dependency destination of a mpaaing dependency without destination", () => {
+      type Dependencies = [{ component: "foo" }];
+
+      type Result = DependencyDestinationsOf<Dependencies>;
+
+      expectTypes<Result, ["foo"]>().toBeEqual();
+    });
+
+    it("is a dependency destination of multiple dependencies", () => {
       type Dependencies = [
-        'foo',
-        { component: 'bar'; destination: 'baz' },
-        { component: 'qux' },
-        { component: 'quux'; destination: 'corge'; optional: true; source: 'grault' },
+        "foo",
+        { component: "bar"; destination: "baz" },
+        { component: "qux" },
+        { component: "quux"; destination: "corge"; optional: true; source: "grault" },
       ];
 
       type Result = DependencyDestinationsOf<Dependencies>;
 
-      expectTypes<Result, ['foo', 'baz', 'qux', 'corge']>().toBeEqual();
+      expectTypes<Result, ["foo", "baz", "qux", "corge"]>().toBeEqual();
     });
   });
 
-  describe('ToMappingDependsOnOption', () => {
-    it('is a mapping dependency option of a simple dependency', () => {
-      type Option = 'foo';
+  describe("ToMappingDependsOnOption", () => {
+    it("is a mapping dependency option of a simple dependency", () => {
+      type Option = "foo";
 
       type Result = ToMappingDependsOnOption<Option>;
 
-      expectTypes<Result, { component: 'foo'; destination: 'foo' }>().toBeEqual();
+      expectTypes<Result, { component: "foo"; destination: "foo" }>().toBeEqual();
     });
 
-    it('is a mapping dependency option of a mapping dependency', () => {
-      type Option = { component: 'foo'; destination: 'bar' };
+    it("is a mapping dependency option of a mapping dependency", () => {
+      type Option = { component: "foo"; destination: "bar" };
 
       type Result = ToMappingDependsOnOption<Option>;
 
-      expectTypes<Result, { component: 'foo'; destination: 'bar' }>().toBeEqual();
+      expectTypes<Result, { component: "foo"; destination: "bar" }>().toBeEqual();
     });
 
-    it('is a mapping dependency option of a mapping dependency without destination', () => {
-      type Option = { component: 'foo' };
+    it("is a mapping dependency option of a mapping dependency without destination", () => {
+      type Option = { component: "foo" };
 
       type Result = ToMappingDependsOnOption<Option>;
 
-      expectTypes<Result, { component: 'foo'; destination: 'foo' }>().toBeEqual();
+      expectTypes<Result, { component: "foo"; destination: "foo" }>().toBeEqual();
     });
   });
 
-  describe('ValidateDependencies', () => {
-    it('validates a valid simple dependency', () => {
+  describe("ValidateDependencies", () => {
+    it("validates a valid simple dependency", () => {
       type Systemic = {
         foo: { component: { foo: string }; scoped: false };
       };
 
       type Dependencies = { foo: { foo: string } };
 
-      type Given = ['foo'];
+      type Given = ["foo"];
 
-      type Result = ValidateDependencies<Systemic, 'foo', Dependencies, Given>;
+      type Result = ValidateDependencies<Systemic, "foo", Dependencies, Given>;
 
       expectTypes<Result, []>().toBeEqual();
     });
 
-    it('validates an invalid simple dependency', () => {
+    it("validates an invalid simple dependency", () => {
       type Systemic = {
         foo: { component: { foo: string }; scoped: false };
       };
 
       type Dependencies = { foo: { bar: number } };
 
-      type Given = ['foo'];
+      type Given = ["foo"];
 
-      type Result = ValidateDependencies<Systemic, 'foo', Dependencies, Given>;
+      type Result = ValidateDependencies<Systemic, "foo", Dependencies, Given>;
 
-      expectTypes<Result, [DependencyValidationError<'foo', { bar: number }, { foo: string }>]>().toBeEqual();
+      expectTypes<
+        Result,
+        [DependencyValidationError<"foo", { bar: number }, { foo: string }>]
+      >().toBeEqual();
     });
 
-    it('validates a valid mapping dependency', () => {
+    it("validates a valid mapping dependency", () => {
       type Systemic = {
         foo: { component: { foo: string }; scoped: false };
         bar: { component: number; scoped: false };
@@ -110,14 +115,14 @@ describe('dependencies types', () => {
 
       type Dependencies = { baz: { foo: string } };
 
-      type Given = [{ component: 'foo'; destination: 'baz' }];
+      type Given = [{ component: "foo"; destination: "baz" }];
 
-      type Result = ValidateDependencies<Systemic, 'bar', Dependencies, Given>;
+      type Result = ValidateDependencies<Systemic, "bar", Dependencies, Given>;
 
       expectTypes<Result, []>().toBeEqual();
     });
 
-    it('validates an invalid mapping dependency', () => {
+    it("validates an invalid mapping dependency", () => {
       type Systemic = {
         foo: { component: { foo: string }; scoped: false };
         bar: { component: number; scoped: false };
@@ -125,14 +130,17 @@ describe('dependencies types', () => {
 
       type Dependencies = { baz: { foo: number } };
 
-      type Given = [{ component: 'foo'; destination: 'baz' }];
+      type Given = [{ component: "foo"; destination: "baz" }];
 
-      type Result = ValidateDependencies<Systemic, 'bar', Dependencies, Given>;
+      type Result = ValidateDependencies<Systemic, "bar", Dependencies, Given>;
 
-      expectTypes<Result, [DependencyValidationError<'baz', { foo: number }, { foo: string }>]>().toBeEqual();
+      expectTypes<
+        Result,
+        [DependencyValidationError<"baz", { foo: number }, { foo: string }>]
+      >().toBeEqual();
     });
 
-    it('validates an unexpected mapping dependency', () => {
+    it("validates an unexpected mapping dependency", () => {
       type Systemic = {
         foo: { component: { foo: string }; scoped: false };
         bar: { component: number; scoped: false };
@@ -141,14 +149,14 @@ describe('dependencies types', () => {
 
       type Dependencies = { baz: { foo: string } };
 
-      type Given = [{ component: 'qux'; destination: 'baz' }];
+      type Given = [{ component: "qux"; destination: "baz" }];
 
-      type Result = ValidateDependencies<Systemic, 'bar', Dependencies, Given>;
+      type Result = ValidateDependencies<Systemic, "bar", Dependencies, Given>;
 
       expectTypes<Result, []>().toBeEqual();
     });
 
-    it('validates a valid mapping dependency with source', () => {
+    it("validates a valid mapping dependency with source", () => {
       type Systemic = {
         foo: { component: { foo: string }; scoped: false };
         bar: { component: number; scoped: false };
@@ -156,14 +164,14 @@ describe('dependencies types', () => {
 
       type Dependencies = { baz: string };
 
-      type Given = [{ component: 'foo'; destination: 'baz'; source: 'foo' }];
+      type Given = [{ component: "foo"; destination: "baz"; source: "foo" }];
 
-      type Result = ValidateDependencies<Systemic, 'bar', Dependencies, Given>;
+      type Result = ValidateDependencies<Systemic, "bar", Dependencies, Given>;
 
       expectTypes<Result, []>().toBeEqual();
     });
 
-    it('validates an invalid mapping dependency with source', () => {
+    it("validates an invalid mapping dependency with source", () => {
       type Systemic = {
         foo: { component: { foo: string }; scoped: false };
         bar: { component: number; scoped: false };
@@ -171,60 +179,60 @@ describe('dependencies types', () => {
 
       type Dependencies = { baz: number };
 
-      type Given = [{ component: 'foo'; destination: 'baz'; source: 'foo' }];
+      type Given = [{ component: "foo"; destination: "baz"; source: "foo" }];
 
-      type Result = ValidateDependencies<Systemic, 'bar', Dependencies, Given>;
+      type Result = ValidateDependencies<Systemic, "bar", Dependencies, Given>;
 
-      expectTypes<Result, [DependencyValidationError<'baz', number, string>]>().toBeEqual();
+      expectTypes<Result, [DependencyValidationError<"baz", number, string>]>().toBeEqual();
     });
   });
 
-  describe('injected', () => {
-    it('is an injected dependency without source', () => {
+  describe("injected", () => {
+    it("is an injected dependency without source", () => {
       type Systemic = {
         foo: { component: { foo: string }; scoped: false };
       };
 
-      type Mapping = { component: 'foo'; destination: 'foo' };
+      type Mapping = { component: "foo"; destination: "foo" };
 
-      type Result = Injected<Systemic, 'foo', Mapping>;
+      type Result = Injected<Systemic, "foo", Mapping>;
 
       expectTypes<Result, { foo: string }>().toBeEqual();
     });
 
-    it('is an injected dependency with source', () => {
+    it("is an injected dependency with source", () => {
       type Systemic = {
         foo: { component: { foo: string }; scoped: false };
       };
 
-      type Mapping = { component: 'foo'; destination: 'foo'; source: 'foo' };
+      type Mapping = { component: "foo"; destination: "foo"; source: "foo" };
 
-      type Result = Injected<Systemic, 'foo', Mapping>;
+      type Result = Injected<Systemic, "foo", Mapping>;
 
       expectTypes<Result, string>().toBeEqual();
     });
 
-    it('is an injected scoped dependency', () => {
+    it("is an injected scoped dependency", () => {
       type Systemic = {
         foo: { component: { foo: string }; scoped: true };
       };
 
-      type Mapping = { component: 'foo'; destination: 'foo' };
+      type Mapping = { component: "foo"; destination: "foo" };
 
-      type Result = Injected<Systemic, 'foo', Mapping>;
+      type Result = Injected<Systemic, "foo", Mapping>;
 
       expectTypes<Result, string>().toBeEqual();
     });
 
-    it('is an injected nested dependency', () => {
+    it("is an injected nested dependency", () => {
       type Systemic = {
-        'foo.bar': { component: { baz: string }; scoped: false };
+        "foo.bar": { component: { baz: string }; scoped: false };
         baz: { component: { baz: string }; scoped: false };
       };
 
-      type Mapping = { component: 'foo.bar'; destination: 'foo.bar' };
+      type Mapping = { component: "foo.bar"; destination: "foo.bar" };
 
-      type Result = Injected<Systemic, 'baz', Mapping>;
+      type Result = Injected<Systemic, "baz", Mapping>;
 
       expectTypes<Result, { baz: string }>().toBeEqual();
     });

@@ -1,4 +1,4 @@
-import initDebug from 'debug';
+import initDebug from "debug";
 
 import type {
   AsRegistrations,
@@ -14,11 +14,11 @@ import type {
   SystemOf,
   Systemic,
   SystemicBuild,
-} from './types';
-import { buildSystem, getDependencies, randomName, sortComponents } from './util';
-import { FunctionComponent } from './types/component';
+} from "./types";
+import { buildSystem, getDependencies, randomName, sortComponents } from "./util";
+import type { FunctionComponent } from "./types/component";
 
-const debug = initDebug('systemic:index');
+const debug = initDebug("systemic:index");
 
 const defaultComponent = {
   async start(dependencies: Record<string, unknown>) {
@@ -26,7 +26,9 @@ const defaultComponent = {
   },
 };
 
-class System<TSystem extends Record<string, Registration> = EmptyObject> implements Systemic<TSystem> {
+class System<TSystem extends Record<string, Registration> = EmptyObject>
+  implements Systemic<TSystem>
+{
   public readonly name: string;
 
   private definitions = new Map<string, Definition>();
@@ -38,7 +40,11 @@ class System<TSystem extends Record<string, Registration> = EmptyObject> impleme
     this.name = options?.name ?? randomName();
   }
 
-  public add: Systemic<TSystem>['add'] = <S extends string, TComponent = unknown, Scoped extends boolean = false>(
+  public add: Systemic<TSystem>["add"] = <
+    S extends string,
+    TComponent = unknown,
+    Scoped extends boolean = false,
+  >(
     name: S extends keyof TSystem ? never : S,
     component?: TComponent,
     options?: { scoped?: Scoped },
@@ -80,8 +86,8 @@ class System<TSystem extends Record<string, Registration> = EmptyObject> impleme
     const definition = isComponent(component)
       ? { component, dependencies: [], scoped }
       : isFunctionComponent(component)
-      ? { component: wrapFC(component), dependencies: [], scoped }
-      : { component: wrap(component), dependencies: [], scoped };
+        ? { component: wrapFC(component), dependencies: [], scoped }
+        : { component: wrap(component), dependencies: [], scoped };
 
     this.definitions.set(name, definition);
     this.currentDefinition = definition;
@@ -95,12 +101,12 @@ class System<TSystem extends Record<string, Registration> = EmptyObject> impleme
         ? { component: ComponentTypeOf<TComponent>; scoped: true }
         : { component: TComponent; scoped: true };
     },
-    'config',
+    "config",
     DependenciesOf<TComponent>
   > {
     debug(`Adding component config to system ${this.name}`);
 
-    return this._set('config', component, true);
+    return this._set("config", component, true);
   }
 
   public remove<S extends string>(name: S): Systemic<Omit<TSystem, S>> {
@@ -140,12 +146,12 @@ class System<TSystem extends Record<string, Registration> = EmptyObject> impleme
 
   public dependsOn<TNames extends DependsOnOption<any>[]>(...dependencies: TNames) {
     if (!this.currentDefinition) {
-      throw new Error('You must add a component before calling dependsOn');
+      throw new Error("You must add a component before calling dependsOn");
     }
 
     this.currentDefinition.dependencies.push(
-      ...dependencies.map(dependency =>
-        typeof dependency === 'string'
+      ...dependencies.map((dependency) =>
+        typeof dependency === "string"
           ? { component: dependency, destination: dependency, optional: false }
           : { destination: dependency.component, optional: false, ...dependency },
       ),
@@ -163,6 +169,7 @@ class System<TSystem extends Record<string, Registration> = EmptyObject> impleme
       }
 
       debug(`Starting component ${name}`);
+      // biome-ignore lint/style/noNonNullAssertion: we know key exists, otherwise it wouldn't be in the sortedComponentNames
       const definition = this.definitions.get(name)!;
       const dependencies = getDependencies(name, this.definitions, this.activeComponents);
       const component = await definition.component.start(dependencies);
@@ -207,11 +214,11 @@ class System<TSystem extends Record<string, Registration> = EmptyObject> impleme
 }
 
 function isComponent(component: any): component is { start: any } {
-  return 'start' in component;
+  return "start" in component;
 }
 
 function isFunctionComponent(component: any): component is FunctionComponent<any, any> {
-  return typeof component === 'function';
+  return typeof component === "function";
 }
 
 function wrap<TComponent>(component: TComponent): Component<TComponent> {

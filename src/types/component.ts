@@ -1,4 +1,4 @@
-import type { EmptyObject } from './util';
+import type { EmptyObject } from "./util";
 
 /**
  * Systemic component that can be added to the systemic system.
@@ -22,7 +22,10 @@ export type Component<TComponent, TDependencies extends Record<string, unknown> 
  * @deprecated Please use `Component instead`.
  * Legacy callback based components can be converted to promise based components using the `promisifyComponent` function.
  */
-export type CallbackComponent<TComponent, TDependencies extends Record<string, unknown> = EmptyObject> = {
+export type CallbackComponent<
+  TComponent,
+  TDependencies extends Record<string, unknown> = EmptyObject,
+> = {
   /**
    * Starts this component
    * @param {TDependencies} dependencies The dependencies of this component
@@ -40,11 +43,18 @@ export type FunctionComponent<TComponent, TDependencies extends Record<string, u
   dependencies: TDependencies,
 ) => Promise<TComponent> | TComponent;
 
-export type IsComponent<T> = T extends Component<any, any> ? true : T extends FunctionComponent<any, any> ? true : false;
-export type ComponentTypeOf<T> = T extends Component<infer C, any> ? C : T extends FunctionComponent<infer C, any> ? C : never;
+export type IsComponent<T> = T extends Component<any, any>
+  ? true
+  : T extends FunctionComponent<any, any>
+    ? true
+    : false;
+export type ComponentTypeOf<T> = T extends Component<infer C, any>
+  ? C
+  : T extends FunctionComponent<infer C, any>
+    ? C
+    : never;
 export type DependenciesOf<T> = T extends Component<any, infer D>
   ? D
   : T extends FunctionComponent<any, infer D>
-  ? D
-  : EmptyObject;
-
+    ? D
+    : EmptyObject;
