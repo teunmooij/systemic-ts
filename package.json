@@ -18,7 +18,7 @@
     }
   },
   "scripts": {
-    "build": "rimraf dist && tsup",
+    "build": "tsup",
     "test": "vitest --watch=false",
     "test:ci": "npm t",
     "test:watch": "vitest",
@@ -38,9 +38,9 @@
     "@vitest/coverage-v8": "^1.6.0",
     "husky": "^8.0.1",
     "lint-staged": "^13.0.3",
-    "rimraf": "^3.0.2",
-    "ts-node": "^10.9.1",
-    "typescript": "^4.9.3",
+    "ts-node": "^10.9.2",
+    "tsup": "^8.1.0",
+    "typescript": "^5.4.5",
     "vitest": "^1.6.0"
   },
   "lint-staged": {
@@ -60,7 +60,6 @@
   "dependencies": {
     "@types/toposort": "^2.0.7",
     "debug": "^4.3.5",
-    "toposort": "^2.0.2",
-    "tsup": "^8.1.0"
+    "toposort": "^2.0.2"
   }
 }
