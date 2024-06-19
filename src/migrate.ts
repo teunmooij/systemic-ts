@@ -23,7 +23,11 @@ export function promisifyComponent<TComponent, TDependencies extends Record<stri
  */
 export function asCallbackSystem<TSystem extends Record<string, Registration>>(
   system: Systemic<TSystem>,
-) {
+): Omit<Systemic<TSystem>, "start" | "stop" | "restart"> & {
+  start: (callback: (error: Error | null, result?: SystemOf<TSystem>) => void) => void;
+  stop: (callback: (error: Error | null) => void) => void;
+  restart: (callback: (error: Error | null, result?: SystemOf<TSystem>) => void) => void;
+} {
   return {
     ...system,
     start: (callback: (error: Error | null, result?: SystemOf<TSystem>) => void) => {

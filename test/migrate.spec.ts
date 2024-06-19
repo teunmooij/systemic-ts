@@ -1,9 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
 
-import { asCallbackSystem, promisifyComponent } from "../src";
+import { asCallbackSystem, promisifyComponent } from "../src/migrate";
 import type { Systemic } from "../src";
 
-describe("promisify", () => {
+describe("migrate", () => {
   describe("asCallbackSystem", () => {
     it("converts a systemic system to a callback system", () =>
       new Promise<void>((done) => {

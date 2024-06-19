@@ -1,11 +1,24 @@
 {
-  "name": "typescript-module-template",
+  "name": "systemic-ts",
   "version": "1.0.0",
-  "description": "description of the module",
+  "description": "A minimal type-safe dependency injection library",
+  "types": "dist/index.d.ts",
   "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.ts"
+    },
+    "./migrate": {
+      "require": "./dist/migrate.js",
+      "import": "./dist/migrate.mjs",
+      "types": "./dist/migrate.d.ts"
+    }
+  },
   "scripts": {
-    "build": "rimraf dist && tsc --sourceMap false",
-    "prepare": "husky install",
+    "build": "rimraf dist && tsup",
     "test": "vitest --watch=false",
     "test:ci": "npm t",
     "test:watch": "vitest",
@@ -16,7 +29,8 @@
     "lint": "biome lint .",
     "lint:apply": "biome lint --apply .",
     "check": "biome check .",
-    "check:apply": "biome check --apply ."
+    "check:apply": "biome check --apply .",
+    "prepare": "husky install"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.8.1",
@@ -46,6 +60,7 @@
   "dependencies": {
     "@types/toposort": "^2.0.7",
     "debug": "^4.3.5",
-    "toposort": "^2.0.2"
+    "toposort": "^2.0.2",
+    "tsup": "^8.1.0"
   }
 }
