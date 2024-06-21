@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 
-import { asCallbackSystem, promisifyComponent } from "../src/migrate";
+import { asCallbackSystem, promisifyComponent, upgradeSystem } from "../src/migrate";
 import type { Systemic } from "../src";
+import { expectType } from "./test-helpers/type-matchers";
 
 describe("migrate", () => {
   describe("asCallbackSystem", () => {
@@ -171,6 +172,44 @@ describe("migrate", () => {
       const result = await component.start({ foo: "bar" });
 
       await expect(component.stop?.()).rejects.toThrow("stop error");
+    });
+  });
+
+  describe("upgrade system", () => {
+    it("converts a legacy systemic system to a systemic-ts system", async () => {
+      const _definitions = {
+        foo: { name: "foo", component: { start: async () => "foo" }, dependencies: [] },
+        bar: {
+          name: "bar",
+          component: {
+            start: (dep, cb) => {
+              cb(null, `${dep.foo}-bar`);
+            },
+          },
+          dependencies: [{ component: "foo", destination: "foo" }],
+        },
+        baz: {
+          name: "baz",
+          component: { start: async (dep) => `${dep.qux}-baz` },
+          dependencies: [{ component: "bar", destination: "qux" }],
+        },
+      };
+
+      const legacySystem = {
+        name: "legacy",
+        _definitions,
+      } as unknown as { name: string; start(): Promise<Record<"foo" | "bar" | "baz", string>> };
+
+      const system = upgradeSystem(legacySystem);
+      type ExpectedSystem = {
+        foo: { component: string; scoped: false };
+        bar: { component: string; scoped: false };
+        baz: { component: string; scoped: false };
+      };
+      expectType<typeof system extends Systemic<ExpectedSystem> ? true : false>().toBeTrue();
+
+      const result = await system.start();
+      expect(result).toEqual({ foo: "foo", bar: "foo-bar", baz: "foo-bar-baz" });
     });
   });
 });

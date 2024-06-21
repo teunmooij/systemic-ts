@@ -26,17 +26,18 @@ const defaultComponent = {
   },
 };
 
-class System<TSystem extends Record<string, Registration> = EmptyObject>
+export class System<TSystem extends Record<string, Registration> = EmptyObject>
   implements Systemic<TSystem>
 {
   public readonly name: string;
 
-  private definitions = new Map<string, Definition>();
   private currentDefinition: Definition | null = null;
+  private readonly activeComponents: Record<string, unknown> = {};
 
-  private activeComponents: Record<string, unknown> = {};
-
-  constructor(options?: { name?: string }) {
+  constructor(
+    options?: { name?: string },
+    protected definitions = new Map<string, Definition>(),
+  ) {
     this.name = options?.name ?? randomName();
   }
 
@@ -223,7 +224,7 @@ function isFunctionComponent(component: any): component is FunctionComponent<any
 
 function wrap<TComponent>(component: TComponent): Component<TComponent> {
   return {
-    start: async () => component,
+    start: () => component,
   };
 }
 
