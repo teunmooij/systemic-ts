@@ -1,8 +1,10 @@
 import { describe, it, expect } from "vitest";
 
 import { systemic } from "../src";
-import type { EmptyObject } from "../src/types";
+import type { EmptyObject, Systemic } from "../src/types";
 import { mockComponent } from "./mocks/component-mock";
+import { expectTypes } from "./test-helpers/type-matchers";
+import type { DependsOn } from "../src/types/systemic";
 
 describe("systemic", () => {
   it("starts without any components", async () => {
@@ -142,6 +144,26 @@ describe("systemic", () => {
       .add("bar", bar)
       .dependsOn("foo", "baz")
       .include(otherSystem);
+
+    const components = await system.start();
+
+    expect(components).toEqual({ foo: "foo", bar: "bar", baz: "baz" });
+    expect(foo.state.dependencies).toEqual({});
+    expect(bar.state.dependencies).toEqual({ foo: "foo", baz: "baz" });
+    expect(baz.state.dependencies).toEqual({ foo: "foo" });
+  });
+
+  it("merges the components from multiple systems", async () => {
+    const foo = mockComponent("foo");
+    const bar = mockComponent("bar");
+    const baz = mockComponent("baz");
+
+    const otherSystem = systemic<{ foo: string }>().add("baz", baz).dependsOn("foo");
+    const system = systemic<{ baz: string }>()
+      .add("foo", foo)
+      .add("bar", bar)
+      .dependsOn("foo", "baz")
+      .merge(otherSystem);
 
     const components = await system.start();
 
@@ -367,5 +389,97 @@ describe("systemic", () => {
 
     expect(components).toEqual({ foo: "foo", bar: "bar" });
     expect(bar.state.dependencies).toEqual({ foo: "foo" });
+  });
+
+  it("removes a component from the system", async () => {
+    const foo = mockComponent("foo");
+    const bar = mockComponent("bar");
+    const system = systemic().add("foo", foo).add("bar", bar).dependsOn("foo");
+
+    const newSystem = system.remove("bar");
+
+    const components = await newSystem.start();
+
+    expectTypes<
+      typeof newSystem,
+      Systemic<{ foo: { component: string; scoped: false } }>
+    >().toBeEqual();
+    expect(components).toEqual({ foo: "foo" });
+  });
+
+  it("does not allow removing a component that does not exist", () => {
+    const foo = mockComponent("foo");
+    const system = systemic().add("foo", foo);
+
+    expect(() => system.remove("bar")).toThrowError('Component "bar" is not registered');
+  });
+
+  it("does not allow removing a component that is a dependency of another component", () => {
+    const foo = mockComponent("foo");
+    const bar = mockComponent("bar");
+    const system = systemic().add("foo", foo).add("bar", bar).dependsOn("foo");
+
+    expect(() => system.remove("foo")).toThrowError('Component "foo" is a dependency of "bar"');
+  });
+
+  it("does not allow adding another dependency to the last component after removing a component", () => {
+    const foo = mockComponent("foo");
+    const bar = mockComponent("bar");
+    const system = systemic().add("foo", foo).add("bar", bar).dependsOn("foo");
+
+    const newSystem = system.remove("bar");
+
+    expect(() => (newSystem as any).dependsOn("foo")).toThrowError(
+      "You must add a component before calling dependsOn",
+    );
+  });
+
+  it("replace a component in the system", async () => {
+    const foo = mockComponent("foo");
+    const bar = mockComponent("bar");
+    const baz = mockComponent("baz");
+    const system = systemic().add("foo", foo).add("bar", bar).dependsOn("foo");
+
+    const newSystem = system.set("bar", baz);
+
+    const components = await newSystem.start();
+
+    expect(components).toEqual({ foo: "foo", bar: "baz" });
+  });
+
+  it("replaces a component in the system with a scoped component", async () => {
+    const foo = mockComponent("foo");
+    const bar = { start: ({ foo }: { foo: string }) => foo };
+    const baz = { bar: "baz" };
+    const system = systemic().add("foo", foo).add("bar", bar).dependsOn("foo");
+
+    const newSystem = system.set("foo", baz, { scoped: true });
+
+    const components = await newSystem.start();
+
+    type ExpectedSystem = {
+      foo: { component: { bar: string }; scoped: true };
+      bar: { component: string; scoped: false };
+    };
+    expectTypes<
+      typeof newSystem,
+      Systemic<ExpectedSystem> & DependsOn<ExpectedSystem, "foo", EmptyObject>
+    >().toBeEqual();
+    expect(components).toEqual({ foo: { bar: "baz" }, bar: "baz" });
+  });
+
+  it("does not start components that have already been started", async () => {
+    const foo = mockComponent("foo");
+    const system = systemic().add("foo", foo);
+
+    const components = await system.start();
+
+    const bar = mockComponent("bar");
+    const newComponents = await system.add("bar", bar).start();
+
+    expect(foo.start).toHaveBeenCalledTimes(1);
+    expect(bar.start).toHaveBeenCalledTimes(1);
+    expect(components).toEqual({ foo: "foo" });
+    expect(newComponents).toEqual({ foo: "foo", bar: "bar" });
   });
 });

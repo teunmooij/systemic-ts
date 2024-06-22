@@ -69,7 +69,7 @@ export class System<TSystem extends Record<string, Registration> = EmptyObject>
     options?: { scoped?: Scoped },
   ): SystemicBuild<
     {
-      [G in keyof TSystem]: G extends keyof S
+      [G in keyof TSystem]: G extends S
         ? IsComponent<TComponent> extends true
           ? { component: ComponentTypeOf<TComponent>; scoped: Scoped }
           : { component: TComponent; scoped: Scoped }
@@ -113,7 +113,18 @@ export class System<TSystem extends Record<string, Registration> = EmptyObject>
   public remove<S extends string>(name: S): Systemic<Omit<TSystem, S>> {
     debug(`Removing component ${name} from system ${this.name}`);
 
+    if (!this.definitions.has(name)) {
+      throw new Error(`Component "${name}" is not registered`);
+    }
+
+    for (const [key, definition] of this.definitions.entries()) {
+      if (definition.dependencies.some((dep) => dep.component === name)) {
+        throw new Error(`Component "${name}" is a dependency of "${key}"`);
+      }
+    }
+
     this.definitions.delete(name);
+    this.currentDefinition = null;
     return this as any;
   }
 

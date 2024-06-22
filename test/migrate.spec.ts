@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 
 import { asCallbackSystem, promisifyComponent, upgradeSystem } from "../src/migrate";
-import type { Systemic } from "../src";
+import { systemic, type Systemic } from "../src";
 import { expectType } from "./test-helpers/type-matchers";
 
 describe("migrate", () => {
@@ -177,15 +177,24 @@ describe("migrate", () => {
 
   describe("upgrade system", () => {
     it("converts a legacy systemic system to a systemic-ts system", async () => {
+      const foo = {
+        start: vi.fn().mockResolvedValue("foo"),
+        stop: vi.fn().mockReturnValue(Promise.resolve()),
+      };
+      const bar = {
+        start: vi.fn().mockImplementation((dep, cb) => {
+          cb(null, `${dep.foo}-bar`);
+        }),
+        stop: vi.fn().mockImplementation((cb) => {
+          cb();
+        }),
+      };
+
       const _definitions = {
-        foo: { name: "foo", component: { start: async () => "foo" }, dependencies: [] },
+        foo: { name: "foo", component: foo, dependencies: [] },
         bar: {
           name: "bar",
-          component: {
-            start: (dep, cb) => {
-              cb(null, `${dep.foo}-bar`);
-            },
-          },
+          component: bar,
           dependencies: [{ component: "foo", destination: "foo" }],
         },
         baz: {
@@ -193,23 +202,115 @@ describe("migrate", () => {
           component: { start: async (dep) => `${dep.qux}-baz` },
           dependencies: [{ component: "bar", destination: "qux" }],
         },
+        corge: {
+          name: "corge",
+          component: "corge",
+          dependencies: [],
+        },
       };
 
       const legacySystem = {
         name: "legacy",
         _definitions,
-      } as unknown as { name: string; start(): Promise<Record<"foo" | "bar" | "baz", string>> };
+      } as unknown as {
+        name: string;
+        start(): Promise<Record<"foo" | "bar" | "baz" | "corge", string>>;
+      };
 
       const system = upgradeSystem(legacySystem);
       type ExpectedSystem = {
         foo: { component: string; scoped: false };
         bar: { component: string; scoped: false };
         baz: { component: string; scoped: false };
+        corge: { component: string; scoped: false };
       };
       expectType<typeof system extends Systemic<ExpectedSystem> ? true : false>().toBeTrue();
 
       const result = await system.start();
-      expect(result).toEqual({ foo: "foo", bar: "foo-bar", baz: "foo-bar-baz" });
+      expect(result).toEqual({ foo: "foo", bar: "foo-bar", baz: "foo-bar-baz", corge: "corge" });
+
+      await system.stop();
+      expect(foo.start).toHaveBeenCalledTimes(1);
+      expect(foo.stop).toHaveBeenCalledTimes(1);
+      expect(bar.start).toHaveBeenCalledTimes(1);
+      expect(bar.stop).toHaveBeenCalledTimes(1);
+    });
+
+    it("throws an error when the legacy system is not a valid legacy systemic system", () => {
+      const legacySystem = systemic();
+      expect(() => upgradeSystem(legacySystem)).toThrowError(
+        "The system does not have the expected internal structure",
+      );
+    });
+
+    it("throws an error when component in upgraded system fails to start", async () => {
+      const foo = { start: vi.fn().mockRejectedValue(new Error("foo error")) };
+      const _definitions = {
+        foo: { name: "foo", component: foo, dependencies: [] },
+      };
+
+      const legacySystem = {
+        name: "legacy",
+        _definitions,
+      } as unknown as { name: string; start(): Promise<Record<"foo", string>> };
+
+      const system = upgradeSystem(legacySystem);
+      await expect(system.start()).rejects.toThrow("foo error");
+    });
+
+    it("throws an error when callback component in upgraded system fails to start", async () => {
+      const foo = { start: vi.fn().mockImplementation((dep, cb) => cb(new Error("foo error"))) };
+      const _definitions = {
+        foo: { name: "foo", component: foo, dependencies: [] },
+      };
+
+      const legacySystem = {
+        name: "legacy",
+        _definitions,
+      } as unknown as { name: string; start(): Promise<Record<"foo", string>> };
+
+      const system = upgradeSystem(legacySystem);
+      await expect(system.start()).rejects.toThrow("foo error");
+    });
+
+    it("throws an error when component in upgraded system fails to stop", async () => {
+      const foo = {
+        start: vi.fn().mockResolvedValue("foo"),
+        stop: vi.fn().mockRejectedValue(new Error("foo error")),
+      };
+      const _definitions = {
+        foo: { name: "foo", component: foo, dependencies: [] },
+      };
+
+      const legacySystem = {
+        name: "legacy",
+        _definitions,
+      } as unknown as { name: string; start(): Promise<Record<"foo", string>> };
+
+      const system = upgradeSystem(legacySystem);
+      await system.start();
+
+      await expect(system.stop()).rejects.toThrow("foo error");
+    });
+
+    it("throws an error when callback component in upgraded system fails to stop", async () => {
+      const foo = {
+        start: vi.fn().mockImplementation((dep, cb) => cb(null, "foo")),
+        stop: vi.fn().mockImplementation((cb) => cb(new Error("foo error"))),
+      };
+      const _definitions = {
+        foo: { name: "foo", component: foo, dependencies: [] },
+      };
+
+      const legacySystem = {
+        name: "legacy",
+        _definitions,
+      } as unknown as { name: string; start(): Promise<Record<"foo", string>> };
+
+      const system = upgradeSystem(legacySystem);
+      await system.start();
+
+      await expect(system.stop()).rejects.toThrow("foo error");
     });
   });
 });

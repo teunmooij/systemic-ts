@@ -71,7 +71,7 @@ export interface Systemic<TSystem extends Record<string, Registration>> {
     options?: { scoped?: Scoped },
   ): SystemicBuild<
     {
-      [G in keyof TSystem]: G extends keyof S
+      [G in keyof TSystem]: G extends S
         ? IsComponent<TComponent> extends true
           ? { component: ComponentTypeOf<TComponent>; scoped: Scoped }
           : { component: TComponent; scoped: Scoped }

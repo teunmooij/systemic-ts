@@ -79,7 +79,7 @@ export function upgradeSystem<
       {
         scoped: value.scoped ?? false,
         component:
-          "start" in value.component
+          typeof value.component === "object" && "start" in value.component
             ? toFlexComponent(value.component as any)
             : { start: () => value.component },
         dependencies: value.dependencies.map((dependency) => ({ optional: false, ...dependency })),
@@ -92,7 +92,7 @@ export function upgradeSystem<
 function ensureLegacySystem<T extends Record<string, unknown>>(
   system: LegacySystem<T>,
 ): asserts system is LegacySystem<T> & LegacySystemInternals {
-  if (!("_definitions" in system)) {
+  if (!("_definitions" in system) || system._definitions instanceof Map) {
     throw new Error("The system does not have the expected internal structure");
   }
 }
