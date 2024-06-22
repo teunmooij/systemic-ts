@@ -30,13 +30,16 @@
     "lint:apply": "biome lint --apply .",
     "check": "biome check .",
     "check:apply": "biome check --apply .",
+    "license": "ts-node ./scripts/license.ts",
     "prepare": "husky install"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.8.1",
     "@types/debug": "^4.1.12",
+    "@types/license-checker": "^25.0.6",
     "@vitest/coverage-v8": "^1.6.0",
     "husky": "^8.0.1",
+    "license-checker": "^25.0.1",
     "lint-staged": "^13.0.3",
     "ts-node": "^10.9.2",
     "tsup": "^8.1.0",
@@ -48,15 +51,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/teunmooij/typescript-module-template.git"
+    "url": "git+https://github.com/teunmooij/systemic-ts.git"
   },
   "keywords": [],
-  "author": "Teun Mooij",
+  "author": "Teun Mooij (https://github.com/teunmooij)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/teunmooij/typescript-module-template/issues"
+    "url": "https://github.com/teunmooij/systemic-ts/issues"
   },
-  "homepage": "https://github.com/teunmooij/typescript-module-template#readme",
+  "homepage": "https://github.com/teunmooij/systemic-ts#readme",
   "dependencies": {
     "@types/toposort": "^2.0.7",
     "debug": "^4.3.5",
