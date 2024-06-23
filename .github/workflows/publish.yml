@@ -8,9 +8,9 @@ on:
         description: "Type of version bump for this release."
         required: true
         options:
-          - major
-          - minor
           - patch
+          - minor
+          - major
           - none
 
 jobs:
@@ -45,7 +45,7 @@ jobs:
         run: |
           git config --local user.email "github@teunmooij.com"
           git config --local user.name "GitHub Action"
-          npm version ${{ inputs.version }} --message $'Update version to %s\n\nAutomated version bump by GitHub Action.')
+          npm version ${{ inputs.version }} --message $'Update version to %s\n\nAutomated version bump by GitHub Action.'
         if: inputs.version && inputs.version != 'none'
 
       - name: Set up NPM 🔑
