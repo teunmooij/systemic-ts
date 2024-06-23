@@ -71,9 +71,9 @@ type ValidateMappingDependency<
   ? [DependencyValidationError<string, unknown, unknown>] // Dependency not created as constant
   : [PropAt<TDependencies, DependencyDestinationOf<TMapping>>] extends [never]
     ? [] // Unexpected dependency
-    : [PropAt<TDependencies, DependencyDestinationOf<TMapping>> | undefined] extends [
-          Injected<TSystemic, TCurrent, TMapping> | undefined,
-        ]
+    : Injected<TSystemic, TCurrent, TMapping> | undefined extends
+          | PropAt<TDependencies, DependencyDestinationOf<TMapping>>
+          | undefined
       ? [] // Correct dependency
       : [
           DependencyValidationError<

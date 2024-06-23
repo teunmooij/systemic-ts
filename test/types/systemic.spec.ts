@@ -56,7 +56,7 @@ describe("systemic types", () => {
   it("is a systemic with multiple components", () => {
     const system = mockSystemic()
       .add("foo", { start: (deps: EmptyObject) => ({ foo: "bar" }) })
-      .add("bar", { start: async (deps: { foo: { foo: "bar" } }) => 42 })
+      .add("bar", { start: async (deps: { foo: { foo: string } }) => 42 })
       .dependsOn("foo")
       .add("baz", (dep: { bar: number }) => ({ baz: dep.bar }))
       .dependsOn("bar");
@@ -317,5 +317,21 @@ describe("systemic types", () => {
         actual: unknown,
       ) => void
     >().toBeEqual();
+  });
+
+  it("is a systemic with an injected dependency that extends the expected type", () => {
+    const system = mockSystemic()
+      .add("foo", { start: async (deps: EmptyObject) => ({ foo: "bar" }) })
+      .add("bar", { start: async (deps: { foo?: { foo?: string } }) => 42 })
+      .dependsOn("foo");
+
+    type Registrations = {
+      foo: { component: { foo: string }; scoped: false };
+      bar: { component: number; scoped: false };
+    };
+    type Expected = Systemic<Registrations> &
+      DependsOn<Registrations, "bar", { foo?: { foo: string } }>;
+
+    expectTypes<typeof system, Expected>().toBeEqual();
   });
 });

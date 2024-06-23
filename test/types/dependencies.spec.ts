@@ -215,6 +215,20 @@ describe("dependencies types", () => {
 
       expectTypes<Result, [DependencyValidationError<string, unknown, unknown>]>().toBeEqual();
     });
+
+    it("is valid when the injected dependency extends the expected dependency", () => {
+      type Systemic = {
+        foo: { component: { foo: "bar" | "baz" }; scoped: false };
+      };
+
+      type Dependencies = { foo: { foo: string } };
+
+      type Given = ["foo"];
+
+      type Result = ValidateDependencies<Systemic, "foo", Dependencies, Given>;
+
+      expectTypes<Result, []>().toBeEqual();
+    });
   });
 
   describe("injected", () => {
