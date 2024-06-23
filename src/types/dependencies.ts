@@ -67,19 +67,31 @@ type ValidateMappingDependency<
   TCurrent extends keyof TSystemic & string,
   TDependencies extends Record<string, unknown>,
   TMapping extends { component: string; destination: string; source?: string },
-> = [PropAt<TDependencies, DependencyDestinationOf<TMapping>>] extends [never]
-  ? [] // Unexpected dependency
-  : [PropAt<TDependencies, DependencyDestinationOf<TMapping>> | undefined] extends [
-        Injected<TSystemic, TCurrent, TMapping> | undefined,
-      ]
-    ? [] // Correct dependency
-    : [
-        DependencyValidationError<
-          DependencyDestinationOf<TMapping>,
-          PropAt<TDependencies, DependencyDestinationOf<TMapping>>,
-          Injected<TSystemic, TCurrent, TMapping>
-        >,
-      ]; // Wrong type
+> = IsDestinationOrSourceUnbound<TMapping> extends true
+  ? [DependencyValidationError<string, unknown, unknown>] // Dependency not created as constant
+  : [PropAt<TDependencies, DependencyDestinationOf<TMapping>>] extends [never]
+    ? [] // Unexpected dependency
+    : [PropAt<TDependencies, DependencyDestinationOf<TMapping>> | undefined] extends [
+          Injected<TSystemic, TCurrent, TMapping> | undefined,
+        ]
+      ? [] // Correct dependency
+      : [
+          DependencyValidationError<
+            DependencyDestinationOf<TMapping>,
+            PropAt<TDependencies, DependencyDestinationOf<TMapping>>,
+            Injected<TSystemic, TCurrent, TMapping>
+          >,
+        ]; // Wrong type
+
+type IsDestinationOrSourceUnbound<
+  TMapping extends { component: string; destination: string; source?: string },
+> = string extends TMapping["destination"]
+  ? true
+  : undefined extends TMapping["source"]
+    ? false
+    : string extends TMapping["source"]
+      ? true
+      : false;
 
 export type Injected<
   TSystemic extends Record<string, Registration<unknown, boolean>>,

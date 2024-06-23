@@ -168,7 +168,9 @@ export type IncompleteSystemic<TMissing> = {
 export type SystemicWithInvalidDependency<TError extends DependencyValidationError<any, any, any>> =
   {
     [X in keyof Systemic<any>]: (
-      error: `Componenent "${TError[0]}" in the system is not of the required type`,
+      error: string extends TError[0]
+        ? "Destination of a dependency is unknown. Did you neglect to mark it 'as const'?"
+        : `Dependency "${TError[0]}" is not of the required type`,
       expected: TError[1],
       actual: TError[2],
     ) => void;

@@ -162,7 +162,7 @@ describe("systemic types", () => {
     expectTypes<
       (typeof system)["start"],
       (
-        error: 'Componenent "foo" in the system is not of the required type',
+        error: 'Dependency "foo" is not of the required type',
         expected: { foo: number },
         actual: { foo: string },
       ) => void
@@ -298,5 +298,24 @@ describe("systemic types", () => {
     type Expected = Systemic<Registrations> & DependsOn<Registrations, "qux", EmptyObject>;
 
     expectTypes<typeof system, Expected>().toBeEqual();
+  });
+
+  it("is a systemic with a dependency not marked as const", () => {
+    const system = mockSystemic()
+      .add("foo", { start: async (deps: EmptyObject) => ({ bar: "bar" }) })
+      .add("bar", { start: async (deps: { baz: { bar: string } }) => 42 })
+      .dependsOn({ component: "foo", destination: "baz" });
+
+    type Expected = SystemicWithInvalidDependency<[string, unknown, unknown]>;
+
+    expectTypes<typeof system, Expected>().toBeEqual();
+    expectTypes<
+      (typeof system)["start"],
+      (
+        error: "Destination of a dependency is unknown. Did you neglect to mark it 'as const'?",
+        expected: unknown,
+        actual: unknown,
+      ) => void
+    >().toBeEqual();
   });
 });

@@ -185,6 +185,36 @@ describe("dependencies types", () => {
 
       expectTypes<Result, [DependencyValidationError<"baz", number, string>]>().toBeEqual();
     });
+
+    it('regards a mapping dependency invalid if the destination is "string"', () => {
+      type Systemic = {
+        foo: { component: { foo: string }; scoped: false };
+        bar: { component: number; scoped: false };
+      };
+
+      type Dependencies = { baz: string };
+
+      type Given = [{ component: "foo"; destination: string }];
+
+      type Result = ValidateDependencies<Systemic, "bar", Dependencies, Given>;
+
+      expectTypes<Result, [DependencyValidationError<string, unknown, unknown>]>().toBeEqual();
+    });
+
+    it('regards a mapping dependency invalid if the source is "string"', () => {
+      type Systemic = {
+        foo: { component: { foo: string }; scoped: false };
+        bar: { component: number; scoped: false };
+      };
+
+      type Dependencies = { baz: string };
+
+      type Given = [{ component: "foo"; destination: "baz"; source: string }];
+
+      type Result = ValidateDependencies<Systemic, "bar", Dependencies, Given>;
+
+      expectTypes<Result, [DependencyValidationError<string, unknown, unknown>]>().toBeEqual();
+    });
   });
 
   describe("injected", () => {
