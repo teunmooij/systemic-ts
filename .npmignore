@@ -1,7 +1,8 @@
-test/
-scripts/
 .husky/
+scripts/
+test/
 
+.eslintcache
 biome.json
 tsconfig.json
 tsup.config.ts

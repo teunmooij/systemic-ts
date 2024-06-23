@@ -12,16 +12,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v3
+      - name: Checkout 💼
+        uses: actions/checkout@v4
+
+      - name: Install Node.js 🧩
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
 
-      - run: npm ci
+      - name: Check for critical vulnerabilities 🔎
+        run: npm audit --audit-level critical --omit=dev
 
-      - run: npm test
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-      - run: npm run build
-      - run: npm config set '//registry.npmjs.org/:_authToken' "${{ secrets.NPM_TOKEN }}"
-      - run: npm publish --access public
+      - name: Install dependencies 📦
+        run: npm ci
+
+      - name: Run tests 🧪
+        run: npm test
+
+      - name: Build 🏗️
+        run: npm run build
+
+      - name: Add license notice 📜
+        run: npm run license
+
+      - name: Set up NPM 🔑
+        run: npm config set '//registry.npmjs.org/:_authToken' "${{ secrets.NPM_TOKEN }}"
+
+      - name: Publish 🚀
+        run: npm publish --access public
