@@ -125,7 +125,7 @@ describe("systemic types", () => {
       foo: { component: { foo: string }; scoped: false };
       bar: { component: number; scoped: false };
     };
-    type Expected = IncompleteSystemic<{ foo: { foo: string } }> &
+    type Expected = IncompleteSystemic<"bar", { foo: { foo: string } }> &
       DependsOn<Registrations, "bar", { foo: { foo: string } }>;
 
     expectTypes<typeof system, Expected>().toBeEqual();
@@ -144,7 +144,7 @@ describe("systemic types", () => {
       foo: { component: { foo: string; bar: { baz: string } }; scoped: true };
       bar: { component: number; scoped: false };
     };
-    type Expected = IncompleteSystemic<{ foo: { baz: string } }> &
+    type Expected = IncompleteSystemic<"bar", { foo: { baz: string } }> &
       DependsOn<Registrations, "bar", { foo: { baz: string } }>;
 
     expectTypes<typeof system, Expected>().toBeEqual();
@@ -250,7 +250,7 @@ describe("systemic types", () => {
       "foo.bar": { component: { baz: number }; scoped: false };
       qux: { component: number; scoped: false };
     };
-    type Expected = IncompleteSystemic<{ foo: { baz: { quux: number } } }> &
+    type Expected = IncompleteSystemic<"qux", { foo: { baz: { quux: number } } }> &
       DependsOn<Registrations, "qux", { foo: { baz: { quux: number } } }>;
 
     expectTypes<typeof system, Expected>().toBeEqual();

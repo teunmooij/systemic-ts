@@ -158,9 +158,9 @@ export type DependsOn<
       >;
 };
 
-export type IncompleteSystemic<TMissing> = {
+export type IncompleteSystemic<TCurrent extends string, TMissing> = {
   [X in keyof Systemic<any>]: (
-    error: `Please add missing dependencies`,
+    error: `Please add missing dependencies for component "${TCurrent}"`,
     expected: StripEmptyObjectsRecursively<DeepRequiredOnly<TMissing>>,
   ) => void;
 };
@@ -184,7 +184,7 @@ export type SystemicBuild<
   TDependencies extends Record<string, unknown>,
 > = [RequiredKeys<TDependencies>] extends [never]
   ? Systemic<TSystemic> & DependsOn<TSystemic, TCurrent, TDependencies>
-  : DependsOn<TSystemic, TCurrent, TDependencies> & IncompleteSystemic<TDependencies>;
+  : DependsOn<TSystemic, TCurrent, TDependencies> & IncompleteSystemic<TCurrent, TDependencies>;
 
 type SystemicBuildDefaultComponent<
   TSystemic extends Record<string, Registration<unknown, boolean>>,
