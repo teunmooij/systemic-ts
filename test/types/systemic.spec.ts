@@ -125,7 +125,7 @@ describe("systemic types", () => {
       foo: { component: { foo: string }; scoped: false };
       bar: { component: number; scoped: false };
     };
-    type Expected = IncompleteSystemic<{ foo: { foo: string } }> &
+    type Expected = IncompleteSystemic<"bar", { foo: { foo: string } }> &
       DependsOn<Registrations, "bar", { foo: { foo: string } }>;
 
     expectTypes<typeof system, Expected>().toBeEqual();
@@ -144,7 +144,7 @@ describe("systemic types", () => {
       foo: { component: { foo: string; bar: { baz: string } }; scoped: true };
       bar: { component: number; scoped: false };
     };
-    type Expected = IncompleteSystemic<{ foo: { baz: string } }> &
+    type Expected = IncompleteSystemic<"bar", { foo: { baz: string } }> &
       DependsOn<Registrations, "bar", { foo: { baz: string } }>;
 
     expectTypes<typeof system, Expected>().toBeEqual();
@@ -156,13 +156,13 @@ describe("systemic types", () => {
       .add("bar", { start: async (deps: { foo: { foo: number } }) => 42 })
       .dependsOn("foo");
 
-    type Expected = SystemicWithInvalidDependency<["foo", { foo: number }, { foo: string }]>;
+    type Expected = SystemicWithInvalidDependency<"bar", ["foo", { foo: number }, { foo: string }]>;
 
     expectTypes<typeof system, Expected>().toBeEqual();
     expectTypes<
       (typeof system)["start"],
       (
-        error: 'Dependency "foo" is not of the required type',
+        error: 'Dependency "foo" on component "bar" is not of the required type',
         expected: { foo: number },
         actual: { foo: string },
       ) => void
@@ -215,7 +215,10 @@ describe("systemic types", () => {
       baz: { component: { foo: { bar: { qux: number } } }; scoped: true };
       "foo.bar": { component: number; scoped: false };
     };
-    type Expected = SystemicWithInvalidDependency<["baz", { qux: string }, { qux: number }]>;
+    type Expected = SystemicWithInvalidDependency<
+      "foo.bar",
+      ["baz", { qux: string }, { qux: number }]
+    >;
 
     expectTypes<typeof system, Expected>().toBeEqual();
   });
@@ -247,7 +250,7 @@ describe("systemic types", () => {
       "foo.bar": { component: { baz: number }; scoped: false };
       qux: { component: number; scoped: false };
     };
-    type Expected = IncompleteSystemic<{ foo: { baz: { quux: number } } }> &
+    type Expected = IncompleteSystemic<"qux", { foo: { baz: { quux: number } } }> &
       DependsOn<Registrations, "qux", { foo: { baz: { quux: number } } }>;
 
     expectTypes<typeof system, Expected>().toBeEqual();
@@ -263,7 +266,10 @@ describe("systemic types", () => {
       "foo.bar": { component: { baz: number }; scoped: false };
       qux: { component: number; scoped: false };
     };
-    type Expected = SystemicWithInvalidDependency<["foo.bar", { baz: string }, { baz: number }]>;
+    type Expected = SystemicWithInvalidDependency<
+      "qux",
+      ["foo.bar", { baz: string }, { baz: number }]
+    >;
 
     expectTypes<typeof system, Expected>().toBeEqual();
   });
@@ -306,13 +312,13 @@ describe("systemic types", () => {
       .add("bar", { start: async (deps: { baz: { bar: string } }) => 42 })
       .dependsOn({ component: "foo", destination: "baz" });
 
-    type Expected = SystemicWithInvalidDependency<[string, unknown, unknown]>;
+    type Expected = SystemicWithInvalidDependency<"bar", [string, unknown, unknown]>;
 
     expectTypes<typeof system, Expected>().toBeEqual();
     expectTypes<
       (typeof system)["start"],
       (
-        error: "Destination of a dependency is unknown. Did you neglect to mark it 'as const'?",
+        error: `Destination of a dependency for component "bar" is unknown. Did you neglect to mark it 'as const'?`,
         expected: unknown,
         actual: unknown,
       ) => void
