@@ -53,11 +53,11 @@ jobs:
           echo "new-version=${NEW_VERSION}" >> $GITHUB_OUTPUT
         if: inputs.version && inputs.version != 'none'
 
-      # - name: Set up NPM 🔑
-      #   run: npm config set '//registry.npmjs.org/:_authToken' "${{ secrets.NPM_TOKEN }}"
+      - name: Set up NPM 🔑
+        run: npm config set '//registry.npmjs.org/:_authToken' "${{ secrets.NPM_TOKEN }}"
 
-      # - name: Publish 🚀
-      #   run: npm publish --access public
+      - name: Publish 🚀
+        run: npm publish --access public
 
       - name: Create release ⛩️
         uses: softprops/action-gh-release@v2
