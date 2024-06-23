@@ -93,11 +93,12 @@ describe("dependencies types", () => {
     it("validates an invalid simple dependency", () => {
       type Systemic = {
         foo: { component: { foo: string }; scoped: false };
+        bar: { component: any; scoped: false };
       };
 
-      type Dependencies = { foo: { bar: number } };
+      type Dependencies = { foo: { bar: number }; bar: string };
 
-      type Given = ["foo"];
+      type Given = ["foo", "bar"];
 
       type Result = ValidateDependencies<Systemic, "foo", Dependencies, Given>;
 
