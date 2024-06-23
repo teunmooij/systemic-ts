@@ -150,7 +150,7 @@ export type DependsOn<
     infer First extends DependencyValidationError<any, any, any>,
     ...any[],
   ]
-    ? SystemicWithInvalidDependency<First>
+    ? SystemicWithInvalidDependency<TCurrent, First>
     : SystemicBuild<
         TSystemic,
         TCurrent,
@@ -165,16 +165,18 @@ export type IncompleteSystemic<TMissing> = {
   ) => void;
 };
 
-export type SystemicWithInvalidDependency<TError extends DependencyValidationError<any, any, any>> =
-  {
-    [X in keyof Systemic<any>]: (
-      error: string extends TError[0]
-        ? "Destination of a dependency is unknown. Did you neglect to mark it 'as const'?"
-        : `Dependency "${TError[0]}" is not of the required type`,
-      expected: TError[1],
-      actual: TError[2],
-    ) => void;
-  };
+export type SystemicWithInvalidDependency<
+  TCurrent extends string,
+  TError extends DependencyValidationError<any, any, any>,
+> = {
+  [X in keyof Systemic<any>]: (
+    error: string extends TError[0]
+      ? `Destination of a dependency for component "${TCurrent}" is unknown. Did you neglect to mark it 'as const'?`
+      : `Dependency "${TError[0]}" on component "${TCurrent}" is not of the required type`,
+    expected: TError[1],
+    actual: TError[2],
+  ) => void;
+};
 
 export type SystemicBuild<
   TSystemic extends Record<string, Registration<unknown, boolean>>,
