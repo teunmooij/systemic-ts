@@ -19,10 +19,8 @@
   },
   "scripts": {
     "build": "tsup",
-    "test": "vitest --watch=false",
-    "test:ci": "npm t",
-    "test:watch": "vitest",
-    "test:coverage": "vitest --watch=false --coverage",
+    "test": "jest -c jest.config.ts",
+    "test:coverage": "jest -c jest.config.ts --verbose --collectCoverage",
     "test:ui": "vitest --ui --coverage.enabled=true",
     "typecheck": "tsc --noEmit",
     "format": "biome format --write .",
@@ -36,15 +34,16 @@
   "devDependencies": {
     "@biomejs/biome": "^1.8.1",
     "@types/debug": "^4.1.12",
+    "@types/jest": "^29.5.12",
     "@types/license-checker": "^25.0.6",
-    "@vitest/coverage-v8": "^1.6.0",
     "husky": "^8.0.1",
+    "jest": "^29.7.0",
     "license-checker": "^25.0.1",
     "lint-staged": "^13.0.3",
+    "ts-jest": "^29.1.5",
     "ts-node": "^10.9.2",
     "tsup": "^8.1.0",
-    "typescript": "^5.4.5",
-    "vitest": "^1.6.0"
+    "typescript": "^5.4.5"
   },
   "lint-staged": {
     "*": "biome check --no-errors-on-unmatched --files-ignore-unknown=true --apply"

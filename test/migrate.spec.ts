@@ -1,5 +1,3 @@
-import { describe, it, expect, vi } from "vitest";
-
 import { asCallbackSystem, promisifyComponent, upgradeSystem } from "../src/migrate";
 import { systemic, type Systemic } from "../src";
 import { expectType } from "./test-helpers/type-matchers";
@@ -9,9 +7,9 @@ describe("migrate", () => {
     it("converts a systemic system to a callback system", () =>
       new Promise<void>((done) => {
         const system = {
-          start: vi.fn().mockResolvedValue("started"),
-          stop: vi.fn().mockResolvedValue("stopped"),
-          restart: vi.fn().mockResolvedValue("restarted"),
+          start: jest.fn().mockResolvedValue("started"),
+          stop: jest.fn().mockResolvedValue("stopped"),
+          restart: jest.fn().mockResolvedValue("restarted"),
         } as unknown as Systemic<any>;
 
         const callbackSystem = asCallbackSystem(system);
@@ -39,9 +37,9 @@ describe("migrate", () => {
     it("calls the callback with an error when starting the system fails", () =>
       new Promise<void>((done) => {
         const system = {
-          start: vi.fn().mockRejectedValue(new Error("start error")),
-          stop: vi.fn().mockResolvedValue("stopped"),
-          restart: vi.fn().mockResolvedValue("restarted"),
+          start: jest.fn().mockRejectedValue(new Error("start error")),
+          stop: jest.fn().mockResolvedValue("stopped"),
+          restart: jest.fn().mockResolvedValue("restarted"),
         } as unknown as Systemic<any>;
 
         const callbackSystem = asCallbackSystem(system);
@@ -58,9 +56,9 @@ describe("migrate", () => {
     it("calls the callback with an error when stopping the system fails", () =>
       new Promise<void>((done) => {
         const system = {
-          start: vi.fn().mockResolvedValue("started"),
-          stop: vi.fn().mockRejectedValue(new Error("stop error")),
-          restart: vi.fn().mockResolvedValue("restarted"),
+          start: jest.fn().mockResolvedValue("started"),
+          stop: jest.fn().mockRejectedValue(new Error("stop error")),
+          restart: jest.fn().mockResolvedValue("restarted"),
         } as unknown as Systemic<any>;
 
         const callbackSystem = asCallbackSystem(system);
@@ -76,9 +74,9 @@ describe("migrate", () => {
     it("calls the callback with an error when restarting the system fails", () =>
       new Promise<void>((done) => {
         const system = {
-          start: vi.fn().mockResolvedValue("started"),
-          stop: vi.fn().mockResolvedValue("stopped"),
-          restart: vi.fn().mockRejectedValue(new Error("restart error")),
+          start: jest.fn().mockResolvedValue("started"),
+          stop: jest.fn().mockResolvedValue("stopped"),
+          restart: jest.fn().mockRejectedValue(new Error("restart error")),
         } as unknown as Systemic<any>;
 
         const callbackSystem = asCallbackSystem(system);
@@ -178,14 +176,14 @@ describe("migrate", () => {
   describe("upgrade system", () => {
     it("converts a legacy systemic system to a systemic-ts system", async () => {
       const foo = {
-        start: vi.fn().mockResolvedValue("foo"),
-        stop: vi.fn().mockReturnValue(Promise.resolve()),
+        start: jest.fn().mockResolvedValue("foo"),
+        stop: jest.fn().mockReturnValue(Promise.resolve()),
       };
       const bar = {
-        start: vi.fn().mockImplementation((dep, cb) => {
+        start: jest.fn().mockImplementation((dep, cb) => {
           cb(null, `${dep.foo}-bar`);
         }),
-        stop: vi.fn().mockImplementation((cb) => {
+        stop: jest.fn().mockImplementation((cb) => {
           cb();
         }),
       };
@@ -199,7 +197,7 @@ describe("migrate", () => {
         },
         baz: {
           name: "baz",
-          component: { start: async (dep) => `${dep.qux}-baz` },
+          component: { start: async (dep: { qux: string }) => `${dep.qux}-baz` },
           dependencies: [{ component: "bar", destination: "qux" }],
         },
         corge: {
@@ -244,7 +242,7 @@ describe("migrate", () => {
     });
 
     it("throws an error when component in upgraded system fails to start", async () => {
-      const foo = { start: vi.fn().mockRejectedValue(new Error("foo error")) };
+      const foo = { start: jest.fn().mockRejectedValue(new Error("foo error")) };
       const _definitions = {
         foo: { name: "foo", component: foo, dependencies: [] },
       };
@@ -259,7 +257,7 @@ describe("migrate", () => {
     });
 
     it("throws an error when callback component in upgraded system fails to start", async () => {
-      const foo = { start: vi.fn().mockImplementation((dep, cb) => cb(new Error("foo error"))) };
+      const foo = { start: jest.fn().mockImplementation((dep, cb) => cb(new Error("foo error"))) };
       const _definitions = {
         foo: { name: "foo", component: foo, dependencies: [] },
       };
@@ -275,8 +273,8 @@ describe("migrate", () => {
 
     it("throws an error when component in upgraded system fails to stop", async () => {
       const foo = {
-        start: vi.fn().mockResolvedValue("foo"),
-        stop: vi.fn().mockRejectedValue(new Error("foo error")),
+        start: jest.fn().mockResolvedValue("foo"),
+        stop: jest.fn().mockRejectedValue(new Error("foo error")),
       };
       const _definitions = {
         foo: { name: "foo", component: foo, dependencies: [] },
@@ -295,8 +293,8 @@ describe("migrate", () => {
 
     it("throws an error when callback component in upgraded system fails to stop", async () => {
       const foo = {
-        start: vi.fn().mockImplementation((dep, cb) => cb(null, "foo")),
-        stop: vi.fn().mockImplementation((cb) => cb(new Error("foo error"))),
+        start: jest.fn().mockImplementation((dep, cb) => cb(null, "foo")),
+        stop: jest.fn().mockImplementation((cb) => cb(new Error("foo error"))),
       };
       const _definitions = {
         foo: { name: "foo", component: foo, dependencies: [] },

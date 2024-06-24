@@ -1,5 +1,3 @@
-import { describe, it } from "vitest";
-
 import type { EmptyObject, Systemic } from "../../src/types";
 import type {
   DependsOn,

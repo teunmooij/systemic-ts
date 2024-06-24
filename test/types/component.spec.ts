@@ -1,5 +1,3 @@
-import { describe, it } from "vitest";
-
 import type { ComponentTypeOf, DependenciesOf, IsComponent } from "../../src/types";
 import { expectType, expectTypes } from "../test-helpers/type-matchers";
 

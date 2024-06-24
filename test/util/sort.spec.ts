@@ -1,5 +1,3 @@
-import { describe, it, expect } from "vitest";
-
 import { sortComponents } from "../../src/util";
 import type { Definition } from "../../src/types";
 

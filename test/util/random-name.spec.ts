@@ -1,5 +1,3 @@
-import { describe, it, expect } from "vitest";
-
 import { randomName } from "../../src/util/random-name";
 
 describe("randomName", () => {

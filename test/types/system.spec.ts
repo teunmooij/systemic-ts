@@ -1,5 +1,3 @@
-import { describe, it } from "vitest";
-
 import type { Registration, SystemOf } from "../../src/types";
 import { expectTypes } from "../test-helpers/type-matchers";
 

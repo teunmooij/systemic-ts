@@ -1,5 +1,3 @@
-import { describe, it, expect } from "vitest";
-
 import { systemic } from "../src";
 import type { EmptyObject, Systemic } from "../src/types";
 import { mockComponent } from "./mocks/component-mock";

@@ -1,5 +1,3 @@
-import { describe, it, expect } from "vitest";
-
 import type { Definition } from "../../src/types";
 import { buildSystem, getDependencies } from "../../src/util";
 

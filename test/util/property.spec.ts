@@ -1,5 +1,3 @@
-import { describe, it, expect } from "vitest";
-
 import { getProperty, hasProperty, setProperty } from "../../src/util/property";
 
 describe("property", () => {
