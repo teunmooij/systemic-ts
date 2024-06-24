@@ -255,6 +255,18 @@ describe("dependencies types", () => {
       expectTypes<Result, string>().toBeEqual();
     });
 
+    it("is an injected dependency with empty string as source", () => {
+      type Systemic = {
+        foo: { component: { foo: string }; scoped: false };
+      };
+
+      type Mapping = { component: "foo"; destination: "foo"; source: "" };
+
+      type Result = Injected<Systemic, "foo", Mapping>;
+
+      expectTypes<Result, { foo: string }>().toBeEqual();
+    });
+
     it("is an injected scoped dependency", () => {
       type Systemic = {
         foo: { component: { foo: string }; scoped: true };
