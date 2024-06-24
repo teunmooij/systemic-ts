@@ -17,6 +17,16 @@ export function promisifyComponent<TComponent, TDependencies extends Record<stri
   };
 }
 
+const legacyModificationKeys = [
+  "add",
+  "set",
+  "configure",
+  "remove",
+  "merge",
+  "include",
+  "boostrap",
+] as const;
+
 /**
  * Turns a systemic system into a callback-style system, which can be used by legacy callback-style runners.
  * @param system the systemic system
@@ -24,21 +34,45 @@ export function promisifyComponent<TComponent, TDependencies extends Record<stri
  */
 export function asCallbackSystem<TSystem extends Record<string, Registration>>(
   system: Systemic<TSystem>,
-): Omit<Systemic<TSystem>, "start" | "stop" | "restart"> & {
-  start: (callback: (error: Error | null, result?: SystemOf<TSystem>) => void) => void;
-  stop: (callback: (error: Error | null) => void) => void;
-  restart: (callback: (error: Error | null, result?: SystemOf<TSystem>) => void) => void;
+): Record<(typeof legacyModificationKeys)[number] | "name", any> & {
+  start(callback: (error: Error | null, result?: SystemOf<TSystem>) => void): void;
+  start(): Promise<SystemOf<TSystem>>;
+  stop(callback: (error: Error | null) => void): void;
+  stop(): Promise<void>;
+  restart(callback: (error: Error | null, result?: SystemOf<TSystem>) => void): void;
+  restart(): Promise<SystemOf<TSystem>>;
 } {
   return {
-    ...system,
-    start: (callback: (error: Error | null, result?: SystemOf<TSystem>) => void) => {
-      system.start().then(immediateCallback(callback)).catch(immediateError(callback));
+    ...legacyModificationKeys.reduce(
+      (acc, key) => {
+        acc[key] = () => {
+          throw new Error("Please make your modifications on the original system.");
+        };
+        return acc;
+      },
+      {} as Record<(typeof legacyModificationKeys)[number], any>,
+    ),
+    name: system.name,
+    start(callback?: (error: Error | null, result?: SystemOf<TSystem>) => void) {
+      const p = system.start();
+      if (callback) {
+        p.then(immediateCallback(callback)).catch(immediateError(callback));
+      }
+      return p;
     },
-    stop: (callback: (error: Error | null) => void) => {
-      system.stop().then(immediateCallback(callback)).catch(immediateError(callback));
+    stop(callback?: (error: Error | null) => void) {
+      const p = system.stop();
+      if (callback) {
+        p.then(immediateCallback(callback)).catch(immediateError(callback));
+      }
+      return p;
     },
-    restart: (callback: (error: Error | null, result?: SystemOf<TSystem>) => void) => {
-      system.restart().then(immediateCallback(callback)).catch(immediateError(callback));
+    restart(callback?: (error: Error | null, result?: SystemOf<TSystem>) => void) {
+      const p = system.restart();
+      if (callback) {
+        p.then(immediateCallback(callback)).catch(immediateError(callback));
+      }
+      return p;
     },
   };
 }
