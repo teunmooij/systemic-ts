@@ -24,7 +24,7 @@ const legacyModificationKeys = [
   "remove",
   "merge",
   "include",
-  "boostrap",
+  "bootstrap",
 ] as const;
 
 /**
