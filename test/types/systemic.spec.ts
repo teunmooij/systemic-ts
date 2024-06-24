@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { describe, it, expect } from "vitest";
+import { describe, it } from "vitest";
 
 import type { EmptyObject, Systemic } from "../../src/types";
 import type {
@@ -310,6 +309,25 @@ describe("systemic types", () => {
     const system = mockSystemic()
       .add("foo", { start: async (deps: EmptyObject) => ({ bar: "bar" }) })
       .add("bar", { start: async (deps: { baz: { bar: string } }) => 42 })
+      .dependsOn({ component: "foo", destination: "baz" });
+
+    type Expected = SystemicWithInvalidDependency<"bar", [string, unknown, unknown]>;
+
+    expectTypes<typeof system, Expected>().toBeEqual();
+    expectTypes<
+      (typeof system)["start"],
+      (
+        error: `Destination of a dependency for component "bar" is unknown. Did you neglect to mark it 'as const'?`,
+        expected: unknown,
+        actual: unknown,
+      ) => void
+    >().toBeEqual();
+  });
+
+  it("is a systemic with a dependency on a default component not marked as const", () => {
+    const system = mockSystemic()
+      .add("foo", { start: async (deps: EmptyObject) => ({ bar: "bar" }) })
+      .add("bar")
       .dependsOn({ component: "foo", destination: "baz" });
 
     type Expected = SystemicWithInvalidDependency<"bar", [string, unknown, unknown]>;

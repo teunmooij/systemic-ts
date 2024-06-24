@@ -197,22 +197,27 @@ type SystemicBuildDefaultComponent<
    */
   dependsOn: <TNames extends DependsOnOption<Omit<TSystemic, TCurrent>>[]>(
     ...names: TNames
-  ) => SystemicBuildDefaultComponent<
-    {
-      [G in keyof TSystemic]: G extends TCurrent
-        ? {
-            component: MergeIntoDefaultComponent<
-              TSystemic,
-              TCurrent,
-              TNames,
-              TSystemic[TCurrent]["component"]
-            >;
-            scoped: false;
-          }
-        : TSystemic[G];
-    },
-    TCurrent
-  >;
+  ) => ValidateDependencies<TSystemic, TCurrent, EmptyObject, TNames> extends [
+    infer First extends DependencyValidationError<any, any, any>,
+    ...any[],
+  ]
+    ? SystemicWithInvalidDependency<TCurrent, First>
+    : SystemicBuildDefaultComponent<
+        {
+          [G in keyof TSystemic]: G extends TCurrent
+            ? {
+                component: MergeIntoDefaultComponent<
+                  TSystemic,
+                  TCurrent,
+                  TNames,
+                  TSystemic[TCurrent]["component"]
+                >;
+                scoped: false;
+              }
+            : TSystemic[G];
+        },
+        TCurrent
+      >;
 };
 
 type MergeIntoDefaultComponent<
