@@ -303,6 +303,36 @@ describe("systemic types", () => {
     expectTypes<typeof system, Expected>().toBeEqual();
   });
 
+  it("is a systemic with a component with a scoped dependency with root as source", () => {
+    const system = mockSystemic()
+      .add("foo", { start: async (deps: EmptyObject) => ({ baz: "qux" }) }, { scoped: true })
+      .add("bar", { start: async (deps: { foo: { baz: string } }) => 42 })
+      .dependsOn({ component: "foo", source: "" } as const);
+
+    type Registrations = {
+      foo: { component: { baz: string }; scoped: true };
+      bar: { component: number; scoped: false };
+    };
+    type Expected = Systemic<Registrations> & DependsOn<Registrations, "bar", EmptyObject>;
+
+    expectTypes<typeof system, Expected>().toBeEqual();
+  });
+
+  it("is a systemic with a component with a scoped dependency with non existing prop as source", () => {
+    const system = mockSystemic()
+      .add("foo", { start: async (deps: EmptyObject) => ({ baz: "qux" }) }, { scoped: true })
+      .add("bar", { start: async (deps: { foo: { baz: string } }) => 42 })
+      .dependsOn({ component: "foo", source: "test123" } as const);
+
+    type Registrations = {
+      foo: { component: { baz: string }; scoped: true };
+      bar: { component: number; scoped: false };
+    };
+    type Expected = SystemicWithInvalidDependency<"bar", ["foo", { baz: string }, undefined]>;
+
+    expectTypes<typeof system, Expected>().toBeEqual();
+  });
+
   it("is a systemic with a dependency not marked as const", () => {
     const system = mockSystemic()
       .add("foo", { start: async (deps: EmptyObject) => ({ bar: "bar" }) })
@@ -353,6 +383,21 @@ describe("systemic types", () => {
     };
     type Expected = Systemic<Registrations> &
       DependsOn<Registrations, "bar", { foo?: { foo: string } }>;
+
+    expectTypes<typeof system, Expected>().toBeEqual();
+  });
+
+  it("is a systemic with an unexpected dependency", () => {
+    const system = mockSystemic()
+      .add("foo", { start: async (deps: EmptyObject) => ({ foo: "bar" }) })
+      .add("bar", { start: async (deps: EmptyObject) => 42 })
+      .dependsOn("foo");
+
+    type Registrations = {
+      foo: { component: { foo: string }; scoped: false };
+      bar: { component: number; scoped: false };
+    };
+    type Expected = Systemic<Registrations> & DependsOn<Registrations, "bar", EmptyObject>;
 
     expectTypes<typeof system, Expected>().toBeEqual();
   });

@@ -24,7 +24,11 @@ export function getDependencies(
       const component = activeComponents[componentName];
       if (component) {
         const sourceProperty =
-          source || (definitions.get(componentName)?.scoped ? name : undefined);
+          typeof source === "string"
+            ? source
+            : definitions.get(componentName)?.scoped
+              ? name
+              : undefined;
         const property = sourceProperty ? getProperty(component, sourceProperty) : component;
         setProperty(acc, destination, property);
       } else if (!hasProperty(activeComponents, componentName)) {

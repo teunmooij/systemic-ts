@@ -375,6 +375,17 @@ describe("systemic", () => {
     expect(bar.state.dependencies).toEqual({ foo: "baz" });
   });
 
+  it("adds the full scoped dependency when source is an empty string", async () => {
+    const foo = { qux: "baz" };
+    const bar = mockComponent<{ foo: { qux: string } }>("bar");
+    const system = systemic()
+      .add("foo", foo, { scoped: true })
+      .add("bar", bar)
+      .dependsOn({ component: "foo", source: "" } as const);
+    await system.start();
+    expect(bar.state.dependencies).toEqual({ foo: { qux: "baz" } });
+  });
+
   it("allows missing optional dependencies", async () => {
     const foo = mockComponent("foo");
     const bar = mockComponent<{ baz?: string }>("bar");

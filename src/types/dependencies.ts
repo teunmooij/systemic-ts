@@ -97,16 +97,26 @@ export type Injected<
   TSystemic extends Record<string, Registration<unknown, boolean>>,
   TCurrent extends keyof TSystemic & string,
   TMapping extends { component: string; destination: string; source?: string },
-> = PropAt<
-  TSystemic[TMapping["component"]]["component"],
-  OptionSource<TSystemic[TMapping["component"]], TCurrent, TMapping["source"]>
+> = NeverToUndefined<
+  PropAt<
+    TSystemic[TMapping["component"]]["component"],
+    OptionSource<TSystemic[TMapping["component"]], TCurrent, TMapping["source"]>
+  >
 >;
+
+type NeverToUndefined<T> = [T] extends [never] ? undefined : T;
 
 type OptionSource<
   TRegistration extends Registration<unknown, boolean>,
   TCurrent extends string,
   TGiven extends string | undefined,
-> = TGiven extends string ? TGiven : TRegistration["scoped"] extends true ? TCurrent : undefined;
+> = TGiven extends string
+  ? TGiven extends ""
+    ? undefined
+    : TGiven
+  : TRegistration["scoped"] extends true
+    ? TCurrent
+    : undefined;
 
 export type DependencyValidationError<TName extends string, TExpected, TActual> = [
   TName,
