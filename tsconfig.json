@@ -3,7 +3,6 @@
     "outDir": "./dist",
     "module": "commonjs",
     "target": "es2015",
-    "allowJs": true,
     "alwaysStrict": true,
     "strict": true,
     "preserveConstEnums": true,
@@ -12,9 +11,7 @@
     "esModuleInterop": true,
     "lib": ["es2015"],
     "rootDir": "./src",
-    "declaration": true,
-    "skipLibCheck": true
+    "declaration": true
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "test", "./*.[js|ts]"]
+  "include": ["src/**/*"]
 }
