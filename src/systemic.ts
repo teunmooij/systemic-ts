@@ -17,6 +17,7 @@ import type {
 } from "./types";
 import { buildSystem, getDependencies, randomName, sortComponents } from "./util";
 import type { FunctionComponent } from "./types/component";
+import { getDependenciesAsync } from "./util/system";
 
 const debug = initDebug("systemic:index");
 
@@ -30,15 +31,17 @@ export class System<TSystem extends Record<string, Registration> = EmptyObject>
   implements Systemic<TSystem>
 {
   public readonly name: string;
+  public parallel: boolean;
 
   private currentDefinition: Definition | null = null;
   private readonly activeComponents: Record<string, unknown> = {};
 
   constructor(
-    options?: { name?: string },
+    options?: { name?: string; parallel?: boolean },
     protected definitions = new Map<string, Definition>(),
   ) {
     this.name = options?.name ?? randomName();
+    this.parallel = Boolean(options?.parallel);
   }
 
   public add: Systemic<TSystem>["add"] = <
@@ -172,6 +175,14 @@ export class System<TSystem extends Record<string, Registration> = EmptyObject>
   }
 
   public async start(): Promise<SystemOf<TSystem>> {
+    if (this.parallel) {
+      return this.startParallel();
+    }
+
+    return this.startSequential();
+  }
+
+  private async startSequential(): Promise<SystemOf<TSystem>> {
     debug(`Starting system ${this.name}`);
 
     const sortedComponentNames = sortComponents(this.definitions, true);
@@ -189,6 +200,38 @@ export class System<TSystem extends Record<string, Registration> = EmptyObject>
       debug(`Component ${name} started`);
     }
 
+    debug(`Building system ${this.name}`);
+    const system = buildSystem(this.activeComponents as ComponentsOf<TSystem>);
+
+    debug(`System ${this.name} started`);
+    return system;
+  }
+
+  private async startParallel(): Promise<SystemOf<TSystem>> {
+    debug(`Starting system ${this.name} in parallel`);
+
+    const sortedComponentNames = sortComponents(this.definitions, true);
+    const componentPromises: Record<string, Promise<any>> = {};
+    for (const name of sortedComponentNames) {
+      if (name in this.activeComponents) {
+        continue;
+      }
+
+      debug(`Starting component ${name}`);
+      // biome-ignore lint/style/noNonNullAssertion: we know key exists, otherwise it wouldn't be in the sortedComponentNames
+      const definition = this.definitions.get(name)!;
+
+      componentPromises[name] = getDependenciesAsync(name, this.definitions, componentPromises)
+        .then((dependencies) => definition.component.start(dependencies))
+        .then((component) => {
+          this.activeComponents[name] = component;
+          debug(`Component ${name} started`);
+          return component;
+        });
+    }
+
+    debug("Waiting for all components to start");
+    await Promise.all(Object.values(componentPromises));
     debug(`Building system ${this.name}`);
     const system = buildSystem(this.activeComponents as ComponentsOf<TSystem>);
 

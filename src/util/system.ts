@@ -44,3 +44,33 @@ export function getDependencies(
     {},
   );
 }
+
+export async function getDependenciesAsync(
+  name: string,
+  definitions: Map<string, Definition>,
+  componentPromises: Record<string, Promise<unknown>>,
+) {
+  const dependencyOptions = definitions.get(name)?.dependencies || [];
+  const dependencies: any = {};
+  for (const { component: componentName, destination, source, optional } of dependencyOptions) {
+    const component = await componentPromises[componentName];
+    if (component) {
+      const sourceProperty =
+        typeof source === "string"
+          ? source
+          : definitions.get(componentName)?.scoped
+            ? name
+            : undefined;
+      const property = sourceProperty ? getProperty(component, sourceProperty) : component;
+      setProperty(dependencies, destination, property);
+    } else if (!hasProperty(componentPromises, componentName)) {
+      if (optional) {
+        debug(`Component ${name} has an unsatisfied optional dependency on ${componentName}`);
+      } else {
+        throw new Error(`Component ${name} has an unsatisfied dependency on ${componentName}`);
+      }
+    }
+  }
+
+  return dependencies;
+}
