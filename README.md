@@ -140,19 +140,14 @@ start();
 
 There are some out of the box runners that can be used in your applications or as a reference for your own custom runner
 
-1. [Service Runner](https://github.com/onebeyond/systemic-service-runner)
-1. [Domain Runner](https://github.com/onebeyond/systemic-domain-runner)
-
-As these runners have been written for `systemic` and expect a callback based system, we'll need to use the migration helper.
+1. [Service Runner](https://npmjs.com/package/systemic-ts-service-runner)
 
 ```typescript
-import { asCallbackSystem } from 'systemic-ts/migrate';
-import runner from 'systemic-service-runner';
+import { runner } from 'systemic-ts-service-runner';
 
-import { initSystem } from './system';
+import system from './system';
 
-runner(asCallbackSystem(initSystem())).start((err, components) => {
-  if (err) throw err;
+runner(system()).start().then(components => {
   console.log('Started');
 });
 ```
